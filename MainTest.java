@@ -8,6 +8,29 @@ import mbtec.com.mz.itemvendatest.domain.Venda;
 public class MainTest {
     public static void main(String[] args) {
 
+        Venda v1 = getVenda();
+
+        System.out.println("###############################X###############################");
+
+        System.out.println(v1);
+        System.out.println("Data de Venda e hora: "+v1.getDataVenda());
+        System.out.println("Cliente: "+v1.getCliente().getNome());
+        for (Itemvenda item : v1.getItens()){
+            System.out.println("Produtos Comprados: "+item);
+        }
+        System.out.println("Total de venda: "+"IVA 17%: "+v1.getValorIva()+"MZN, \nTotal: "+v1.getTotalFinal()+"MZN");
+
+        System.out.println("###############################X###############################");
+        for (Itemvenda item : v1.getItens()){
+            System.out.println("Produtos: "+item.getProduto().getDescricao()
+                    +" "+item.getProduto().getPreco());
+        }
+
+
+
+    }
+
+    private static @NotNull Venda getVenda() {
         Cliente cl = new Cliente(1, "Zulo", "9998777Nuit", "Pemba, Cabo Delgado");
         Cliente cl1 = new Cliente(2, "Zito", "7778777Nuit", "Nampula, Nampula");
         Cliente cl2 = new Cliente(3, "Zura", "8888777Nuit", "Cuamba, Niassa");
