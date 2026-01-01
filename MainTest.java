@@ -1,9 +1,14 @@
 package mbtec.com.mz.itemvendatest;
 
+import mbtec.com.mz.itemvendatest.DAO.ClienteDAO;
+import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
 import mbtec.com.mz.itemvendatest.domain.Cliente;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
 import mbtec.com.mz.itemvendatest.domain.Venda;
+import org.jetbrains.annotations.NotNull;
+
+import java.sql.Connection;
 
 public class MainTest {
     public static void main(String[] args) {
@@ -25,9 +30,6 @@ public class MainTest {
             System.out.println("Produtos: "+item.getProduto().getDescricao()
                     +" "+item.getProduto().getPreco());
         }
-
-
-
     }
 
     private static @NotNull Venda getVenda() {
@@ -52,24 +54,6 @@ public class MainTest {
         v1.adicionarItem(iv2);
         v1.adicionarItem(iv3);
         v1.adicionarItem(iv4);
-
-        System.out.println("###############################X###############################");
-
-        System.out.println(v1);
-        System.out.println("Data de Venda e hora: "+v1.getDataVenda());
-        System.out.println("Cliente: "+v1.getCliente().getNome());
-        for (Itemvenda item : v1.getItens()){
-            System.out.println("Produtos Comprados: "+item);
-        }
-        System.out.println("Total de venda: "+"IVA 17%: "+v1.getValorIva()+"MZN, \nTotal: "+v1.getTotalFinal()+"MZN");
-
-        System.out.println("###############################X###############################");
-        for (Itemvenda item : v1.getItens()){
-            System.out.println("Produtos: "+item.getProduto().getDescricao()
-                    +" "+item.getProduto().getPreco());
-        }
-
-
-
+        return v1;
     }
 }
