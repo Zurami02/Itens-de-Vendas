@@ -1,5 +1,11 @@
 package mbtec.com.mz.itemvendatest.domain;
-
+/**
+ * Metodo responsavel em instanciar objeto itens de venda
+ * Contendo calculos de Subtotal e desconto
+ * Versao de aprendizagem em Venda e Itens de Venda
+ * @version 1.1
+ * @author Mbtec subtecnico Zulo Rajabo mitumba
+ */
 public class Itemvenda {
 
     private int idItemVenda;

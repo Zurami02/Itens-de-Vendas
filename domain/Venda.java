@@ -3,7 +3,13 @@ package mbtec.com.mz.itemvendatest.domain;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Responsavel em instanciar Venda calculando ou adicionando os
+ * itens de venda, somar os itens, calcular total de venda
+ * Versao de aprendizagem em Venda e Itens de Venda
+ * @version 1.1
+ * @author Mbtec subtecnico Zulo Rajabo mitumba
+ */
 public class Venda {
 
     private int idVenda;
@@ -65,12 +71,12 @@ public class Venda {
         return itens;
     }
 
-    // adicionar item
+    //adicionar item
     public void adicionarItem(Itemvenda item) {
         itens.add(item);
     }
 
-    // CÁLCULOS
+    //CÁLCULOS
     public double getSubtotal() {
         return itens.stream()
                 .mapToDouble(Itemvenda::getTotalComDesconto)

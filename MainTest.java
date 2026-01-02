@@ -1,15 +1,16 @@
 package mbtec.com.mz.itemvendatest;
 
-import mbtec.com.mz.itemvendatest.DAO.ClienteDAO;
-import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
 import mbtec.com.mz.itemvendatest.domain.Cliente;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
 import mbtec.com.mz.itemvendatest.domain.Venda;
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.Connection;
-
+/**
+ * Versao de aprendizagem em Venda e Itens de Venda
+ * @version 1.1
+ * @author Mbtec subtecnico Zulo Rajabo mitumba
+ */
 public class MainTest {
     public static void main(String[] args) {
 
