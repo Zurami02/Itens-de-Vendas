@@ -50,8 +50,7 @@ public class ConexaoSQLite {
                 connection = DriverManager.getConnection(url);
             }
         }catch (SQLException e){
-            AlertaUtil.mostrarErro("Erro de Conexao com DB",
-                    "Contacte a assistencia tecnica");
+            throw new RuntimeException("Erro ao conectar ao banco", e);
         }
         return connection;
     }
