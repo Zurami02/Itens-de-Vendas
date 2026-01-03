@@ -15,12 +15,22 @@ public class Venda {
     private int idVenda;
     private LocalDateTime dataVenda;
     private Cliente cliente;
+    private String nomeCliente;//Cliente nao registado no db Null
+    private String nuitCliente;//Cliente nao registado no db Null
     private boolean pago;
     private double taxaIva; // ex: 0.17 (17%)
     private List<Itemvenda> itens = new ArrayList<>();
 
     public Venda() {
         this.dataVenda = LocalDateTime.now();
+    }
+
+    public Venda(int idVenda, String nomeCliente, String nuitCliente, boolean pago, double taxaIva) {
+        this.idVenda = idVenda;
+        this.nomeCliente = nomeCliente;
+        this.nuitCliente = nuitCliente;
+        this.pago = pago;
+        this.taxaIva = taxaIva;
     }
 
     public Venda(int idVenda, Cliente cliente, boolean pago, double taxaIva) {
@@ -37,6 +47,22 @@ public class Venda {
 
     public void setIdVenda(int idVenda) {
         this.idVenda = idVenda;
+    }
+
+    public String getNomeCliente() {
+        return nomeCliente;
+    }
+
+    public void setNomeCliente(String nomeCliente) {
+        this.nomeCliente = nomeCliente;
+    }
+
+    public String getNuitCliente() {
+        return nuitCliente;
+    }
+
+    public void setNuitCliente(String nuitCliente) {
+        this.nuitCliente = nuitCliente;
     }
 
     public LocalDateTime getDataVenda() {
