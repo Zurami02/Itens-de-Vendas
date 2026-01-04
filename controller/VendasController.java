@@ -4,23 +4,30 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.util.StringConverter;
+import mbtec.com.mz.itemvendatest.DAO.ClienteDAO;
 import mbtec.com.mz.itemvendatest.DAO.ItemvendaDAO;
 import mbtec.com.mz.itemvendatest.DAO.ProdutosDAO;
 import mbtec.com.mz.itemvendatest.DAO.VendaDAO;
 import mbtec.com.mz.itemvendatest.domain.Cliente;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
+import mbtec.com.mz.itemvendatest.service.AlertaUtil;
 
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class VendasController implements Initializable {
@@ -71,13 +78,13 @@ public class VendasController implements Initializable {
     private TableView<Itemvenda> tableViewCarrinho;
 
     @FXML
-    private TableView<Produtos> tablevieProdutoDoSistema;
+    private TableView<Produtos> tableviewProdutoDoSistema;
 
     @FXML
     private TextField txtCliente;
 
     @FXML
-    private TextField txtCodigoPesquisa;
+    private TextField txtCodigoProdutoPesquisa;
 
     @FXML
     private TextField txtDesconto;
@@ -89,7 +96,7 @@ public class VendasController implements Initializable {
     private TextField txtIVA;
 
     @FXML
-    private TextField txtNomeClientePesquisa;
+    private TextField txtNomeProdutoPesquisa;
 
     @FXML
     private TextField txtNuit;
@@ -109,13 +116,61 @@ public class VendasController implements Initializable {
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
     private final ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
     private final VendaDAO vendaDAO = new VendaDAO();
+
     private Produtos produtos;
-    private List<Produtos> produtosList;
-    private ObservableList<Produtos> produtosObservableList;
+
+    private List<Produtos> produtosList;                // lista vinda do DAO
+    private ObservableList<Produtos> produtosObservableList; // lista base da TableView
+    private FilteredList<Produtos> produtosFilteredList;     // filtro da TableView
+
+    private List<Cliente> clienteList;
+    private ObservableList<Cliente> clienteObservableList;
 
     @FXML
     void btnAdicionarCarrinho(ActionEvent event) {
 
+    }
+
+    @FXML
+    void pesquisarProdutoPorCodigo(KeyEvent event) {
+
+        String texto = txtCodigoProdutoPesquisa.getText();
+        if (texto.isEmpty()) {
+            if (produtosFilteredList != null) {
+                produtosFilteredList.setPredicate(p -> true); // mostra todos
+                tableviewProdutoDoSistema.getSelectionModel().clearSelection();
+            }
+            return;
+        }
+        if (event.getCode() != KeyCode.ENTER) return;
+
+        if (texto.isBlank()) return;
+
+        int codigo;
+        try {
+            codigo = Integer.parseInt(texto);
+        } catch (NumberFormatException e) {
+            AlertaUtil.mostrarErro("Código inválido", "Digite apenas números");
+            return;
+        }
+
+        boolean encontrado = false;
+
+        for (Produtos p : produtosList) {
+            if (p.getIdProduto() == codigo) {
+                produtosFilteredList.setPredicate(prod ->
+                        prod.getIdProduto() == codigo);
+
+                tableviewProdutoDoSistema.getSelectionModel().select(p);
+                encontrado = true;
+                break;
+            }
+        }
+
+        if (!encontrado) {
+            AlertaUtil.mostrarErro("Produto não encontrado",
+                    "Nenhum produto com esse código");
+        }
     }
 
     @FXML
@@ -127,10 +182,17 @@ public class VendasController implements Initializable {
     void btnRemoverItem(ActionEvent event) {
 
     }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        lbDataHora.setText(LocalDate.now().toString());
         carregarTableViewProdutosNoSistema();
+        carregarProdutosNoSistema();
+        pesquisarProdutoPorNome();
+        carregarCombboxClienteNoSistema();
+        listenerFocusCamposNomeCodigoPesquisa();
     }
+
     private void carregarTableViewProdutosNoSistema() {
         colunaCodigoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("idProduto"));
         colunaProdutoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("descricao"));
@@ -140,9 +202,9 @@ public class VendasController implements Initializable {
 
         colunaPrecoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("preco"));
         colunaEstoqueProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("quantidadeEstoque"));
+    }
 
     public void carregarCombboxClienteNoSistema() {
-        // Converte a lista de produtos em uma lista observável
         clienteList = new ClienteDAO().listar(); // ou seu método
         clienteObservableList = FXCollections.observableArrayList(clienteList);
         comboBoxClientenoSistema.setItems(clienteObservableList);
@@ -157,7 +219,6 @@ public class VendasController implements Initializable {
                                                                          oldValue, newValue) -> {
             final String filtro = newValue.toLowerCase().trim();
 
-            // Aplica filtro
             clienteFiltrados.setPredicate(cliente -> {
                 if (filtro.isEmpty()) {
                     return true;
@@ -165,7 +226,6 @@ public class VendasController implements Initializable {
                 return cliente.getNome().toLowerCase().contains(filtro);
             });
 
-            // Mostra o menu dropdown automaticamente
             if (!comboBoxClientenoSistema.isShowing()) {
                 comboBoxClientenoSistema.show();
             }
@@ -229,7 +289,16 @@ public class VendasController implements Initializable {
 
         produtosList = produtosDAO.listar();
 
-        produtosObservableList = FXCollections.observableArrayList(produtosList);
-        tablevieProdutoDoSistema.setItems(produtosObservableList);
+        produtosObservableList =
+                FXCollections.observableArrayList(produtosList);
+
+        produtosFilteredList =
+                new FilteredList<>(produtosObservableList, p -> true);
+
+        tableviewProdutoDoSistema.setItems(produtosFilteredList);
     }
+
+
+
+
 }
