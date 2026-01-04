@@ -141,12 +141,91 @@ public class VendasController implements Initializable {
         colunaPrecoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("preco"));
         colunaEstoqueProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("quantidadeEstoque"));
 
-        //Listener para txtProcuraNome
-        txtNomeClientePesquisa.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.isEmpty()) {
-                carregarTableViewProdutosNoSistema();
+    public void carregarCombboxClienteNoSistema() {
+        // Converte a lista de produtos em uma lista observável
+        clienteList = new ClienteDAO().listar(); // ou seu método
+        clienteObservableList = FXCollections.observableArrayList(clienteList);
+        comboBoxClientenoSistema.setItems(clienteObservableList);
+        // Define um filtro dinâmico
+        FilteredList<Cliente> clienteFiltrados = new FilteredList<>(clienteObservableList, c -> true);
+
+        comboBoxClientenoSistema.setItems(clienteFiltrados);
+
+        // Adiciona um listener para o editor de texto do ComboBox
+        comboBoxClientenoSistema.setEditable(true);
+        comboBoxClientenoSistema.getEditor().textProperty().addListener((obs,
+                                                                         oldValue, newValue) -> {
+            final String filtro = newValue.toLowerCase().trim();
+
+            // Aplica filtro
+            clienteFiltrados.setPredicate(cliente -> {
+                if (filtro.isEmpty()) {
+                    return true;
+                }
+                return cliente.getNome().toLowerCase().contains(filtro);
+            });
+
+            // Mostra o menu dropdown automaticamente
+            if (!comboBoxClientenoSistema.isShowing()) {
+                comboBoxClientenoSistema.show();
             }
         });
+
+        // Corrige o comportamento de seleção para manter o objeto Cliente real
+        comboBoxClientenoSistema.setConverter(new StringConverter<Cliente>() {
+            @Override
+            public String toString(Cliente cliente) {
+                return cliente != null ? cliente.getNome() : "";
+            }
+
+            @Override
+            public Cliente fromString(String string) {
+                return clienteObservableList.stream()
+                        .filter(c -> c.getNome().equals(string))
+                        .findFirst().orElse(null);
+            }
+        });
+    }
+
+    //pesquisar produtos usando nome
+    private void pesquisarProdutoPorNome() {
+
+        txtNomeProdutoPesquisa.textProperty().addListener((obs, oldValue, newValue) -> {
+
+            produtosFilteredList.setPredicate(produto -> {
+
+                if (newValue == null || newValue.isBlank()) {
+                    return true;
+                }
+
+                return produto.getDescricao()
+                        .toLowerCase()
+                        .contains(newValue.toLowerCase());
+            });
+        });
+    }
+
+    private void listenerFocusCamposNomeCodigoPesquisa() {
+        txtNomeProdutoPesquisa.focusedProperty().addListener((obs, old, focou) -> {
+            if (focou) {
+                txtCodigoProdutoPesquisa.clear();
+            }
+        });
+
+        txtCodigoProdutoPesquisa.focusedProperty().addListener((obs, old, focou) -> {
+            if (focou) {
+                txtNomeProdutoPesquisa.clear();
+            }
+        });
+
+    }
+
+    private void limparFiltro() {
+        produtosFilteredList.setPredicate(p -> true);
+    }
+
+    //carregar os produtos no sistema
+    private void carregarProdutosNoSistema() {
 
         produtosList = produtosDAO.listar();
 
