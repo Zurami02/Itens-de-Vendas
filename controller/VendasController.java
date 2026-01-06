@@ -20,6 +20,7 @@ import mbtec.com.mz.itemvendatest.DAO.ClienteDAO;
 import mbtec.com.mz.itemvendatest.DAO.ItemvendaDAO;
 import mbtec.com.mz.itemvendatest.DAO.ProdutosDAO;
 import mbtec.com.mz.itemvendatest.DAO.VendaDAO;
+import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
 import mbtec.com.mz.itemvendatest.domain.Cliente;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
@@ -27,6 +28,7 @@ import mbtec.com.mz.itemvendatest.domain.Venda;
 import mbtec.com.mz.itemvendatest.service.AlertaUtil;
 
 import java.net.URL;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -128,7 +130,7 @@ public class VendasController implements Initializable {
 
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
     private final ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
-    private final VendaDAO vendaDAO = new VendaDAO();
+    private VendaDAO vendaDAO = new VendaDAO();
 
     private Produtos produto;
     private Venda venda = new Venda();
@@ -231,7 +233,33 @@ public class VendasController implements Initializable {
 
     @FXML
     void btnFinalizar(ActionEvent event) {
+        if (venda.getItens().isEmpty()) {
+            AlertaUtil.mostrarErro("Venda", "Carrinho vazio.");
+            return;
+        }
 
+        if (!validarCliente()) return;
+
+        try (Connection conn = ConexaoSQLite.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            VendaDAO vendaDAO = new VendaDAO();
+            ItemvendaDAO itemDAO = new ItemvendaDAO();
+
+            int idVenda = vendaDAO.salvarVenda(conn, venda);
+            itemDAO.salvarItens(conn, idVenda, venda.getItens());
+
+            conn.commit();
+
+            AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
+            System.out.println(venda);
+            limparFormulario();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertaUtil.mostrarErro("Erro", "Erro ao salvar venda.");
+        }
     }
 
     @FXML
@@ -536,10 +564,47 @@ public class VendasController implements Initializable {
         tableviewProdutoDoSistema.setItems(produtosFilteredList);
     }
 
-    private void limparVenda() {
+    private boolean validarCliente() {
+
+        // Cliente registado
+        if (venda.getCliente() != null) {
+            venda.setNomeCliente(null);
+            venda.setNuitCliente(null);
+            return true;
+        }
+
+        // Cliente não registado
+        String nome = txtCliente.getText().trim();
+        String nuit = txtNuit.getText().trim();
+
+        if (nome.isEmpty()) {
+            AlertaUtil.mostrarErro("Cliente", "Informe o nome do cliente.");
+            return false;
+        }
+
+        if (nuit.isEmpty()) {
+            // regra comum: consumidor final
+            nuit = "6660002";
+        }
+
+        venda.setNomeCliente(nome);
+        venda.setNuitCliente(nuit);
+        venda.setCliente(null);
+
+        return true;
+    }
+
+    private void limparFormulario() {
         venda = new Venda();
+        tableViewCarrinho.getItems().clear();
         itemvendaObservableList.clear();
         txtTotal.setText("0.00");
+        txtCliente.clear();
+        txtNuit.clear();
+        txtDinheiroPago.clear();
+        txtTroco.clear();
+
+        comboBoxClientenoSistema.getSelectionModel().clearSelection();
     }
 
 }
