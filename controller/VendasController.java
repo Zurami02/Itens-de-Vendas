@@ -233,6 +233,13 @@ public class VendasController implements Initializable {
 
     @FXML
     void btnFinalizar(ActionEvent event) {
+        if (txtDinheiroPago.getText().isBlank()) {
+            AlertaUtil.
+                    mostrarAviso("Falta pagamento",
+                            "Certifique que o Cliente pagou");
+            txtDinheiroPago.setPromptText("Falta pagamento");
+            return;
+        }
         if (venda.getItens().isEmpty()) {
             AlertaUtil.mostrarErro("Venda", "Carrinho vazio.");
             return;
@@ -254,6 +261,9 @@ public class VendasController implements Initializable {
 
             AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
             System.out.println(venda);
+            if (venda.isVd()) {
+                imprimirVD(venda);
+            }
             limparFormulario();
 
         } catch (Exception e) {
@@ -599,6 +609,7 @@ public class VendasController implements Initializable {
         tableViewCarrinho.getItems().clear();
         itemvendaObservableList.clear();
         txtTotal.setText("0.00");
+        txtSubtotal.clear();
         txtCliente.clear();
         txtNuit.clear();
         txtDinheiroPago.clear();
@@ -606,5 +617,13 @@ public class VendasController implements Initializable {
 
         comboBoxClientenoSistema.getSelectionModel().clearSelection();
     }
+
+    private void imprimirVD(Venda venda) {
+        System.out.println("Imprimindo VD da venda " + venda.getIdVenda());
+        // futuramente:
+        // JasperFillManager.fillReport(...)
+        // JasperViewer.viewReport(...)
+    }
+
 
 }

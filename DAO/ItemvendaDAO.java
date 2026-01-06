@@ -11,8 +11,8 @@ public class ItemvendaDAO {
             throws SQLException {
 
         String sql = """
-            INSERT INTO item_venda
-            (id_venda, id_produto, quantidade, preco_unitario, desconto)
+            INSERT INTO itemvenda
+            (idvenda, idproduto, quantidade, precounitario, desconto)
             VALUES (?, ?, ?, ?, ?)
         """;
 

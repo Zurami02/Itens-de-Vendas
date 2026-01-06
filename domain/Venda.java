@@ -20,6 +20,7 @@ public class Venda {
     private boolean pago;
     private double taxaIva; // ex: 0.17 (17%)
     private List<Itemvenda> itens = new ArrayList<>();
+    private boolean vd;
 
     public Venda() {
         this.dataVenda = LocalDateTime.now();
@@ -39,6 +40,14 @@ public class Venda {
         this.cliente = cliente;
         this.pago = pago;
         this.taxaIva = taxaIva;
+    }
+
+    public boolean isVd() {
+        return vd;
+    }
+
+    public void setVd(boolean vd) {
+        this.vd = vd;
     }
 
     public int getIdVenda() {

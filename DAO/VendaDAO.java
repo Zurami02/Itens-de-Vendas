@@ -34,7 +34,10 @@ public class VendaDAO {
 
             ps.executeUpdate();
 
-            try (ResultSet rs = ps.getGeneratedKeys()) {
+            //BUSCAR O ID GERADO NO SQLITE
+            try (Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT last_insert_rowid()")) {
+
                 if (rs.next()) {
                     return rs.getInt(1);
                 }
