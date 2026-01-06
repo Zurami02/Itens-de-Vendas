@@ -1,9 +1,13 @@
 package mbtec.com.mz.itemvendatest.service;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Control;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -60,5 +64,25 @@ public class AlertaUtil {
         );
         return alerta.showAndWait();
 
+    }
+
+    public static void piscarVermelho(Control campo) {
+
+        String estiloErro = """
+        -fx-border-color: red;
+        -fx-background-color: #ffeeee;
+        -fx-prompt-text-fill: red;
+    """;
+
+        String estiloNormal = "";
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, e -> campo.setStyle(estiloErro)),
+                new KeyFrame(Duration.seconds(1), e -> campo.setStyle(estiloNormal))
+        );
+
+        timeline.setCycleCount(3);
+        timeline.setAutoReverse(true);
+        timeline.play();
     }
 }

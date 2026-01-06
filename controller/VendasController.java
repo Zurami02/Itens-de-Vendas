@@ -154,7 +154,8 @@ public class VendasController implements Initializable {
                 .getSelectionModel().getSelectedItem();
 
         if (produto == null) {
-            AlertaUtil.mostrarErro("Produto", "Selecione um produto");
+            AlertaUtil.piscarVermelho(tableviewProdutoDoSistema);
+            //AlertaUtil.mostrarErro("Produto", "Selecione um produto");
             return;
         }
 
@@ -167,7 +168,9 @@ public class VendasController implements Initializable {
                 desconto = Double.parseDouble(txtDesconto.getText());
             }
         } catch (NumberFormatException e) {
-            AlertaUtil.mostrarErro("Erro", "Quantidade ou desconto inválido");
+            AlertaUtil.piscarVermelho(txtQuantidade);
+            AlertaUtil.piscarVermelho(txtDesconto);
+            //AlertaUtil.mostrarErro("Erro", "Quantidade ou desconto inválido");
             return;
         }
 
@@ -211,6 +214,7 @@ public class VendasController implements Initializable {
         try {
             codigo = Integer.parseInt(texto);
         } catch (NumberFormatException e) {
+            AlertaUtil.piscarVermelho(txtCodigoProdutoPesquisa);
             AlertaUtil.mostrarErro("Código inválido", "Digite apenas números");
             return;
         }
@@ -229,6 +233,7 @@ public class VendasController implements Initializable {
         }
 
         if (!encontrado) {
+            AlertaUtil.piscarVermelho(txtCodigoProdutoPesquisa);
             AlertaUtil.mostrarErro("Produto não encontrado",
                     "Nenhum produto com esse código");
         }
@@ -236,6 +241,7 @@ public class VendasController implements Initializable {
 
     @FXML
     void btnFinalizar(ActionEvent event) {
+
         if (txtDinheiroPago.getText().isBlank()) {
             piscarVermelho(txtDinheiroPago);
             txtDinheiroPago.setPromptText("Falta pagamento");
@@ -244,6 +250,7 @@ public class VendasController implements Initializable {
                             //"Certifique que o Cliente pagou");
             return;
         }
+
         if (venda.getItens().isEmpty()) {
             AlertaUtil.mostrarErro("Venda", "Carrinho vazio.");
             return;
@@ -287,6 +294,7 @@ public class VendasController implements Initializable {
                 tableViewCarrinho.getSelectionModel().getSelectedItem();
 
         if (itemSelecionado == null) {
+            AlertaUtil.piscarVermelho(tableViewCarrinho);
             AlertaUtil.mostrarAviso("Remover item", "Selecione um item do carrinho");
             return;
         }
@@ -377,19 +385,6 @@ public class VendasController implements Initializable {
      * Piscando vermelho para dar erro a um campo textField
      * @param campo
      */
-    /*private void piscarVermelho(TextField campo){
-        String estiloErro = "-fx-border-color: red; -fx-backgroind-color: #ffeeee; -fx-prompt-text-fill: red;";
-        String estiloNormal = "";
-
-        Timeline timeline = new Timeline(new KeyFrame(Duration.ZERO, e->
-                campo.setStyle(estiloErro)), new KeyFrame(Duration.millis(200),e->
-                campo.setStyle(estiloNormal))
-        );
-
-        timeline.setCycleCount(3);
-        timeline.setAutoReverse(true);
-        timeline.play();
-    }*/
 
     private void piscarVermelho(Control campo) {
 
@@ -406,7 +401,7 @@ public class VendasController implements Initializable {
                 new KeyFrame(Duration.seconds(1), e -> campo.setStyle(estiloNormal))
         );
 
-        timeline.setCycleCount(5);
+        timeline.setCycleCount(3);
         timeline.setAutoReverse(true);
         timeline.play();
     }
@@ -482,6 +477,8 @@ public class VendasController implements Initializable {
         listenerCliente();
         listenerIVA();
         listenerPagamento();
+        txtCliente.setDisable(true);
+        txtNuit.setDisable(true);
     }
 
     private void listenerPesquisaProduto() {
@@ -549,10 +546,11 @@ public class VendasController implements Initializable {
             double total = venda.getTotalFinal();
 
             if (pago < total) {
-                AlertaUtil.mostrarAviso(
-                        "Valor inválido",
-                        "O valor pago não pode ser menor que o total"
-                );
+                AlertaUtil.piscarVermelho(txtDinheiroPago);
+//                AlertaUtil.mostrarAviso(
+//                        "Valor inválido",
+//                        "O valor pago não pode ser menor que o total"
+//                );
                 txtTroco.clear();
                 return;
             }
@@ -630,7 +628,9 @@ public class VendasController implements Initializable {
         String nuit = txtNuit.getText().trim();
 
         if (nome.isEmpty()) {
-            AlertaUtil.mostrarErro("Cliente", "Informe o nome do cliente.");
+            AlertaUtil.piscarVermelho(comboBoxClientenoSistema);
+            AlertaUtil.piscarVermelho(txtCliente);
+            //AlertaUtil.mostrarErro("Cliente", "Informe o nome do cliente.");
             return false;
         }
 
@@ -655,6 +655,7 @@ public class VendasController implements Initializable {
         txtCliente.clear();
         txtNuit.clear();
         txtDinheiroPago.clear();
+        txtIVA.clear();
         txtTroco.clear();
 
         comboBoxClientenoSistema.getSelectionModel().clearSelection();
