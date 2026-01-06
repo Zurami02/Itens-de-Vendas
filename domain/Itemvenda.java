@@ -17,7 +17,7 @@ public class Itemvenda {
 
     public Itemvenda() {}
 
-    public Itemvenda(Produtos produto, int quantidade, double desconto, Venda venda) {
+    public Itemvenda(Produtos produto, int quantidade, double precoUnitario, double desconto, Venda venda) {
         this.produto = produto;
         this.quantidade = quantidade;
         this.precoUnitario = produto.getPreco();
@@ -94,4 +94,3 @@ public class Itemvenda {
                 " | Total: " + getTotalComDesconto();
     }
 }
-

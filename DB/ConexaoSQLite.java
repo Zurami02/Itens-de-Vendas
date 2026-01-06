@@ -41,8 +41,8 @@ public class ConexaoSQLite {
                                 StandardCopyOption.REPLACE_EXISTING);
 
                     } catch (IOException e) {
-                        AlertaUtil.mostrarErro("Erro a conexao",
-                                "Banco de nao encontrado"+e.getMessage());
+
+                        throw new RuntimeException("Banco de nao encontrado",e);
                     }
                 }
 
@@ -62,7 +62,7 @@ public class ConexaoSQLite {
                 connection = null;
             }
         } catch (SQLException e) {
-            AlertaUtil.mostrarErro("Erro ao fechar conexao","Contacte Assistencia tecnica");
+            throw new RuntimeException("Erro ao fechar conexao", e);
         }
     }
 }

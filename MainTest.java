@@ -46,10 +46,10 @@ public class MainTest {
 
         Venda v1 = new Venda(1, cl,true,0.17);
 
-        Itemvenda iv1 = new Itemvenda(p1, 5, 0.0, v1);
-        Itemvenda iv2 = new Itemvenda(p4, 5, 0.0, v1);
-        Itemvenda iv3 = new Itemvenda(p2, 5, 0.0, v1);
-        Itemvenda iv4 = new Itemvenda(p3, 5, 0.0, v1);
+        Itemvenda iv1 = new Itemvenda(p1,2, 5, 0.0, v1);
+        Itemvenda iv2 = new Itemvenda(p4,2, 5, 0.0, v1);
+        Itemvenda iv3 = new Itemvenda(p2,3, 5, 0.0, v1);
+        Itemvenda iv4 = new Itemvenda(p3,4, 5, 0.0, v1);
 
         v1.adicionarItem(iv1);
         v1.adicionarItem(iv2);

@@ -2,6 +2,8 @@ package mbtec.com.mz.itemvendatest.controller;
 
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -21,6 +23,7 @@ import mbtec.com.mz.itemvendatest.DAO.VendaDAO;
 import mbtec.com.mz.itemvendatest.domain.Cliente;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
+import mbtec.com.mz.itemvendatest.domain.Venda;
 import mbtec.com.mz.itemvendatest.service.AlertaUtil;
 
 import java.net.URL;
@@ -42,10 +45,10 @@ public class VendasController implements Initializable {
     private JFXCheckBox checkBoxVD;
 
     @FXML
-    private TableColumn<Produtos, Integer> colunaCodigoProdutoDoSistema;
+    private TableView<Produtos> tableviewProdutoDoSistema;
 
     @FXML
-    private TableColumn<Itemvenda, Double> colunaDescontoCarrinho;
+    private TableColumn<Produtos, Integer> colunaCodigoProdutoDoSistema;
 
     @FXML
     private TableColumn<Produtos, Integer> colunaEstoqueProdutoDoSistema;
@@ -54,13 +57,21 @@ public class VendasController implements Initializable {
     private TableColumn<Produtos, Double> colunaPrecoProdutoDoSistema;
 
     @FXML
+    private TableColumn<Produtos, String> colunaProdutoProdutoDoSistema;
+
+
+    @FXML
+    private TableView<Itemvenda> tableViewCarrinho;
+
+    @FXML
+    private TableColumn<Itemvenda, Double> colunaDescontoCarrinho;
+
+    @FXML
     private TableColumn<Itemvenda, Integer> colunaPrecoUnitarioCarrinho;
 
     @FXML
     private TableColumn<Itemvenda, String> colunaProdutoCarrinho;
 
-    @FXML
-    private TableColumn<Produtos, String> colunaProdutoProdutoDoSistema;
 
     @FXML
     private TableColumn<Itemvenda, Integer> colunaQTDCarrinho;
@@ -68,17 +79,13 @@ public class VendasController implements Initializable {
     @FXML
     private TableColumn<Itemvenda, Double> colunaTotalCarrinho;
 
+
     @FXML
     private JFXComboBox<Cliente> comboBoxClientenoSistema;
 
     @FXML
     private Label lbDataHora;
 
-    @FXML
-    private TableView<Itemvenda> tableViewCarrinho;
-
-    @FXML
-    private TableView<Produtos> tableviewProdutoDoSistema;
 
     @FXML
     private TextField txtCliente;
@@ -117,18 +124,61 @@ public class VendasController implements Initializable {
     private final ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
     private final VendaDAO vendaDAO = new VendaDAO();
 
-    private Produtos produtos;
+    private Produtos produto;
+    private Venda venda = new Venda();
+    private Itemvenda itemvenda;
 
     private List<Produtos> produtosList;                // lista vinda do DAO
     private ObservableList<Produtos> produtosObservableList; // lista base da TableView
     private FilteredList<Produtos> produtosFilteredList;     // filtro da TableView
+    private final ObservableList<Itemvenda> itemvendaObservableList = FXCollections.observableArrayList();
+    private List<Itemvenda> itemvendaList;
 
-    private List<Cliente> clienteList;
     private ObservableList<Cliente> clienteObservableList;
 
     @FXML
     void btnAdicionarCarrinho(ActionEvent event) {
 
+        Produtos produto = tableviewProdutoDoSistema
+                .getSelectionModel().getSelectedItem();
+
+        if (produto == null) {
+            AlertaUtil.mostrarErro("Produto", "Selecione um produto");
+            return;
+        }
+
+        int qtd;
+        double desconto = 0;
+
+        try {
+            qtd = Integer.parseInt(txtQuantidade.getText());
+            if (!txtDesconto.getText().isBlank()) {
+                desconto = Double.parseDouble(txtDesconto.getText());
+            }
+        } catch (NumberFormatException e) {
+            AlertaUtil.mostrarErro("Erro", "Quantidade ou desconto inválido");
+            return;
+        }
+
+        if (qtd <= 0 || qtd > produto.getQuantidadeEstoque()) {
+            AlertaUtil.mostrarErro("Quantidade", "Quantidade inválida ou sem estoque");
+            return;
+        }
+
+        itemvenda = new Itemvenda(
+                produto,
+                qtd,
+                produto.getPreco(),
+                desconto,
+                venda
+        );
+
+        venda.adicionarItem(itemvenda);
+        itemvendaObservableList.add(itemvenda);
+
+        //atualizarTotalVenda();
+        atualizarValoresVenda();
+        limparCamposItem();
     }
 
     @FXML
@@ -179,18 +229,46 @@ public class VendasController implements Initializable {
     }
 
     @FXML
+    void checkBoxClienteNaoRegistado(ActionEvent event) {
+
+        comboBoxClientenoSistema.getSelectionModel().clearSelection();
+
+        txtCliente.clear();
+        txtNuit.clear();
+
+        txtCliente.setDisable(false);
+        txtNuit.setDisable(false);
+
+        venda.setCliente(null);
+    }
+
+    @FXML
     void btnRemoverItem(ActionEvent event) {
+        Itemvenda itemSelecionado =
+                tableViewCarrinho.getSelectionModel().getSelectedItem();
+
+        if (itemSelecionado == null) {
+            AlertaUtil.mostrarAviso("Remover item", "Selecione um item do carrinho");
+            return;
+        }
+
+        venda.getItens().remove(itemSelecionado);
+        itemvendaObservableList.remove(itemSelecionado);
+        atualizarValoresVenda();
 
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        venda = new Venda();
         lbDataHora.setText(LocalDate.now().toString());
         carregarTableViewProdutosNoSistema();
         carregarProdutosNoSistema();
         pesquisarProdutoPorNome();
         carregarCombboxClienteNoSistema();
-        listenerFocusCamposNomeCodigoPesquisa();
+        inicializarListeners();
+        tableViewCarrinho.setItems(itemvendaObservableList);
+        carregarTableViewCarrinho();
     }
 
     private void carregarTableViewProdutosNoSistema() {
@@ -204,8 +282,39 @@ public class VendasController implements Initializable {
         colunaEstoqueProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("quantidadeEstoque"));
     }
 
+    private void carregarTableViewCarrinho() {
+        colunaProdutoCarrinho.setCellValueFactory(data ->
+                new SimpleStringProperty(
+                        data.getValue().getProduto().getDescricao()
+                )
+        );
+
+        colunaQTDCarrinho.setCellValueFactory(new PropertyValueFactory<>("quantidade"));
+
+        colunaPrecoUnitarioCarrinho.setCellValueFactory(
+                new PropertyValueFactory<>("precoUnitario")
+        );
+
+        colunaDescontoCarrinho.setCellValueFactory(
+                new PropertyValueFactory<>("desconto")
+        );
+
+        // total calculado (SEM atributo!)
+        colunaTotalCarrinho.setCellValueFactory(data ->
+                new SimpleDoubleProperty(
+                        data.getValue().getTotalComDesconto()
+                ).asObject()
+        );
+    }
+
+    private void limparCamposItem() {
+        txtQuantidade.clear();
+        txtDesconto.clear();
+        tableviewProdutoDoSistema.getSelectionModel().clearSelection();
+    }
+
     public void carregarCombboxClienteNoSistema() {
-        clienteList = new ClienteDAO().listar(); // ou seu método
+        List<Cliente> clienteList = new ClienteDAO().listar();
         clienteObservableList = FXCollections.observableArrayList(clienteList);
         comboBoxClientenoSistema.setItems(clienteObservableList);
         // Define um filtro dinâmico
@@ -248,6 +357,7 @@ public class VendasController implements Initializable {
     }
 
     //pesquisar produtos usando nome
+
     private void pesquisarProdutoPorNome() {
 
         txtNomeProdutoPesquisa.textProperty().addListener((obs, oldValue, newValue) -> {
@@ -265,7 +375,14 @@ public class VendasController implements Initializable {
         });
     }
 
-    private void listenerFocusCamposNomeCodigoPesquisa() {
+    private void inicializarListeners() {
+        listenerPesquisaProduto();
+        listenerCliente();
+        listenerIVA();
+        listenerPagamento();
+    }
+
+    private void listenerPesquisaProduto() {
         txtNomeProdutoPesquisa.focusedProperty().addListener((obs, old, focou) -> {
             if (focou) {
                 txtCodigoProdutoPesquisa.clear();
@@ -275,6 +392,207 @@ public class VendasController implements Initializable {
         txtCodigoProdutoPesquisa.focusedProperty().addListener((obs, old, focou) -> {
             if (focou) {
                 txtNomeProdutoPesquisa.clear();
+            }
+        });
+    }
+
+    private void listenerPagamento() {
+        txtDinheiroPago.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) calcularTroco();
+        });
+
+        txtDinheiroPago.focusedProperty().addListener((obs, o, focou) -> {
+            if (!focou) calcularTroco();
+        });
+    }
+
+    private void listenerIVA() {
+        checkBoxIVA.selectedProperty().addListener((obs, oldValue, marcado) -> {
+
+            if (marcado) {
+                venda.setTaxaIva(0.17);
+            } else {
+                venda.setTaxaIva(0.0);
+            }
+
+            atualizarValoresVenda();
+        });
+
+    }
+
+    private void listenerCliente() {
+
+        comboBoxClientenoSistema.valueProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                txtCliente.setText(novo.getNome());
+                txtNuit.setText(novo.getNuit());
+                txtCliente.setDisable(true);
+                txtNuit.setDisable(true);
+                venda.setCliente(novo);
+            }
+        });
+    }
+
+    private void calcularTroco() {
+
+        String texto = txtDinheiroPago.getText();
+
+        if (texto == null || texto.isBlank()) {
+            txtTroco.clear();
+            return;
+        }
+
+        try {
+            double pago = Double.parseDouble(texto);
+            double total = venda.getTotalFinal();
+
+            if (pago < total) {
+                AlertaUtil.mostrarAviso(
+                        "Valor inválido",
+                        "O valor pago não pode ser menor que o total"
+                );
+                txtTroco.clear();
+                return;
+            }
+
+            txtTroco.setText(String.format("%.2f", pago - total));
+
+        } catch (NumberFormatException e) {
+            AlertaUtil.mostrarErro("Valor inválido", "Digite apenas números");
+            txtTroco.clear();
+        }
+    }
+
+    private void atualizarValoresVenda() {
+
+        txtSubtotal.setText(String.format("%.2f", venda.getSubtotal()));
+        txtIVA.setText(String.format("%.2f", venda.getValorIva()));
+        txtTotal.setText(String.format("%.2f", venda.getTotalFinal()));
+
+        recalcularTrocoSePossivel();
+    }
+
+    private void recalcularTrocoSePossivel() {
+
+        String texto = txtDinheiroPago.getText();
+
+        if (texto == null || texto.isBlank()) {
+            txtTroco.clear();
+            return;
+        }
+
+        try {
+            double pago = Double.parseDouble(texto);
+            double total = venda.getTotalFinal();
+
+            if (pago >= total) {
+                txtTroco.setText(String.format("%.2f", pago - total));
+            } else {
+                txtTroco.clear();
+            }
+
+        } catch (NumberFormatException e) {
+            txtTroco.clear();
+        }
+    }
+
+
+    //deve ser eliminado
+    private void listenerFocusCamposNomeCodigoPesquisa() {
+
+
+        comboBoxClientenoSistema.valueProperty().addListener((obs, velho, novo) ->
+        {
+            if (novo != null) {
+
+                venda.setCliente(novo);
+                txtCliente.setText(novo.getNome());
+                txtNuit.setText(novo.getNuit());
+            }
+        });
+
+        txtCliente.focusedProperty().addListener((obs, velho, novo) ->
+        {
+            comboBoxClientenoSistema.getSelectionModel().clearSelection();
+        });
+
+        txtNuit.focusedProperty().addListener((obs, velho, novo) ->
+        {
+            comboBoxClientenoSistema.getSelectionModel().clearSelection();
+        });
+
+
+        txtDinheiroPago.focusedProperty().addListener((obs, antigo, focou) -> {
+
+            // Só calcula quando PERDER o foco
+            if (!focou) {
+
+                String texto = txtDinheiroPago.getText();
+
+                if (texto == null || texto.isBlank()) {
+                    txtTroco.clear();
+                    return;
+                }
+
+                try {
+                    double pago = Double.parseDouble(texto);
+                    double total = venda.getTotalFinal();
+
+                    if (pago < total) {
+                        AlertaUtil.mostrarAviso(
+                                "Valor inválido",
+                                "O valor pago não pode ser menor que o total da venda"
+                        );
+                        txtTroco.clear();
+                        return;
+                    }
+
+                    txtTroco.setText(String.format("%.2f", pago - total));
+
+                } catch (NumberFormatException e) {
+                    AlertaUtil.mostrarErro(
+                            "Valor inválido",
+                            "Digite apenas números no valor pago"
+                    );
+                    txtTroco.clear();
+                }
+            }
+        });
+
+        txtDinheiroPago.setOnKeyPressed(event -> {
+
+            if (event.getCode() != KeyCode.ENTER) {
+                return;
+            }
+
+            String texto = txtDinheiroPago.getText();
+
+            if (texto == null || texto.isBlank()) {
+                txtTroco.clear();
+                return;
+            }
+
+            try {
+                double pago = Double.parseDouble(texto);
+                double total = venda.getTotalFinal();
+
+                if (pago < total) {
+                    AlertaUtil.mostrarAviso(
+                            "Valor inválido",
+                            "O valor pago não pode ser menor que o total da venda"
+                    );
+                    txtTroco.clear();
+                    return;
+                }
+
+                txtTroco.setText(String.format("%.2f", pago - total));
+
+            } catch (NumberFormatException e) {
+                AlertaUtil.mostrarErro(
+                        "Valor inválido",
+                        "Digite apenas números no valor pago"
+                );
+                txtTroco.clear();
             }
         });
 
@@ -298,7 +616,10 @@ public class VendasController implements Initializable {
         tableviewProdutoDoSistema.setItems(produtosFilteredList);
     }
 
-
-
+    private void limparVenda() {
+        venda = new Venda();
+        itemvendaObservableList.clear();
+        txtTotal.setText("0.00");
+    }
 
 }
