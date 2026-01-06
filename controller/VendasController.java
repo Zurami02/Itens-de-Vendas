@@ -2,6 +2,8 @@ package mbtec.com.mz.itemvendatest.controller;
 
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -15,6 +17,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import mbtec.com.mz.itemvendatest.DAO.ClienteDAO;
 import mbtec.com.mz.itemvendatest.DAO.ItemvendaDAO;
@@ -234,10 +237,11 @@ public class VendasController implements Initializable {
     @FXML
     void btnFinalizar(ActionEvent event) {
         if (txtDinheiroPago.getText().isBlank()) {
-            AlertaUtil.
-                    mostrarAviso("Falta pagamento",
-                            "Certifique que o Cliente pagou");
+            piscarVermelho(txtDinheiroPago);
             txtDinheiroPago.setPromptText("Falta pagamento");
+            //AlertaUtil.
+                    //mostrarAviso("Falta pagamento",
+                            //"Certifique que o Cliente pagou");
             return;
         }
         if (venda.getItens().isEmpty()) {
@@ -367,6 +371,44 @@ public class VendasController implements Initializable {
                         data.getValue().getTotalComDesconto()
                 ).asObject()
         );
+    }
+
+    /**
+     * Piscando vermelho para dar erro a um campo textField
+     * @param campo
+     */
+    /*private void piscarVermelho(TextField campo){
+        String estiloErro = "-fx-border-color: red; -fx-backgroind-color: #ffeeee; -fx-prompt-text-fill: red;";
+        String estiloNormal = "";
+
+        Timeline timeline = new Timeline(new KeyFrame(Duration.ZERO, e->
+                campo.setStyle(estiloErro)), new KeyFrame(Duration.millis(200),e->
+                campo.setStyle(estiloNormal))
+        );
+
+        timeline.setCycleCount(3);
+        timeline.setAutoReverse(true);
+        timeline.play();
+    }*/
+
+    private void piscarVermelho(Control campo) {
+
+        String estiloErro = """
+        -fx-border-color: red;
+        -fx-background-color: #ffeeee;
+        -fx-prompt-text-fill: red;
+    """;
+
+        String estiloNormal = "";
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, e -> campo.setStyle(estiloErro)),
+                new KeyFrame(Duration.seconds(1), e -> campo.setStyle(estiloNormal))
+        );
+
+        timeline.setCycleCount(5);
+        timeline.setAutoReverse(true);
+        timeline.play();
     }
 
     private void limparCamposItem() {
