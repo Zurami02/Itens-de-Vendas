@@ -33,6 +33,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+/**
+ * @version 1.1
+ * Metodo responsavel para cadastrar a venda
+ */
+
 public class VendasController implements Initializable {
 
     @FXML
@@ -79,13 +84,14 @@ public class VendasController implements Initializable {
     @FXML
     private TableColumn<Itemvenda, Double> colunaTotalCarrinho;
 
+    @FXML
+    private JFXCheckBox checkBoxClienteNaoRegistado;
 
     @FXML
     private JFXComboBox<Cliente> comboBoxClientenoSistema;
 
     @FXML
     private Label lbDataHora;
-
 
     @FXML
     private TextField txtCliente;
@@ -230,16 +236,7 @@ public class VendasController implements Initializable {
 
     @FXML
     void checkBoxClienteNaoRegistado(ActionEvent event) {
-
-        comboBoxClientenoSistema.getSelectionModel().clearSelection();
-
-        txtCliente.clear();
-        txtNuit.clear();
-
-        txtCliente.setDisable(false);
-        txtNuit.setDisable(false);
-
-        venda.setCliente(null);
+        controloClienteNaoRegistado();
     }
 
     @FXML
@@ -269,6 +266,33 @@ public class VendasController implements Initializable {
         inicializarListeners();
         tableViewCarrinho.setItems(itemvendaObservableList);
         carregarTableViewCarrinho();
+    }
+
+    private void controloClienteNaoRegistado(){
+        boolean marcado = checkBoxClienteNaoRegistado.isSelected();
+
+        if (marcado) {
+            comboBoxClientenoSistema.hide();
+            comboBoxClientenoSistema.setDisable(true);
+            comboBoxClientenoSistema.getSelectionModel().clearSelection();
+
+            txtCliente.clear();
+            txtNuit.clear();
+
+            txtCliente.setDisable(false);
+            txtNuit.setDisable(false);
+
+            venda.setCliente(null);
+
+        } else {
+            comboBoxClientenoSistema.setDisable(false);
+
+            txtCliente.clear();
+            txtNuit.clear();
+
+            txtCliente.setDisable(true);
+            txtNuit.setDisable(true);
+        }
     }
 
     private void carregarTableViewProdutosNoSistema() {
@@ -355,8 +379,6 @@ public class VendasController implements Initializable {
             }
         });
     }
-
-    //pesquisar produtos usando nome
 
     private void pesquisarProdutoPorNome() {
 
@@ -494,108 +516,6 @@ public class VendasController implements Initializable {
         } catch (NumberFormatException e) {
             txtTroco.clear();
         }
-    }
-
-
-    //deve ser eliminado
-    private void listenerFocusCamposNomeCodigoPesquisa() {
-
-
-        comboBoxClientenoSistema.valueProperty().addListener((obs, velho, novo) ->
-        {
-            if (novo != null) {
-
-                venda.setCliente(novo);
-                txtCliente.setText(novo.getNome());
-                txtNuit.setText(novo.getNuit());
-            }
-        });
-
-        txtCliente.focusedProperty().addListener((obs, velho, novo) ->
-        {
-            comboBoxClientenoSistema.getSelectionModel().clearSelection();
-        });
-
-        txtNuit.focusedProperty().addListener((obs, velho, novo) ->
-        {
-            comboBoxClientenoSistema.getSelectionModel().clearSelection();
-        });
-
-
-        txtDinheiroPago.focusedProperty().addListener((obs, antigo, focou) -> {
-
-            // Só calcula quando PERDER o foco
-            if (!focou) {
-
-                String texto = txtDinheiroPago.getText();
-
-                if (texto == null || texto.isBlank()) {
-                    txtTroco.clear();
-                    return;
-                }
-
-                try {
-                    double pago = Double.parseDouble(texto);
-                    double total = venda.getTotalFinal();
-
-                    if (pago < total) {
-                        AlertaUtil.mostrarAviso(
-                                "Valor inválido",
-                                "O valor pago não pode ser menor que o total da venda"
-                        );
-                        txtTroco.clear();
-                        return;
-                    }
-
-                    txtTroco.setText(String.format("%.2f", pago - total));
-
-                } catch (NumberFormatException e) {
-                    AlertaUtil.mostrarErro(
-                            "Valor inválido",
-                            "Digite apenas números no valor pago"
-                    );
-                    txtTroco.clear();
-                }
-            }
-        });
-
-        txtDinheiroPago.setOnKeyPressed(event -> {
-
-            if (event.getCode() != KeyCode.ENTER) {
-                return;
-            }
-
-            String texto = txtDinheiroPago.getText();
-
-            if (texto == null || texto.isBlank()) {
-                txtTroco.clear();
-                return;
-            }
-
-            try {
-                double pago = Double.parseDouble(texto);
-                double total = venda.getTotalFinal();
-
-                if (pago < total) {
-                    AlertaUtil.mostrarAviso(
-                            "Valor inválido",
-                            "O valor pago não pode ser menor que o total da venda"
-                    );
-                    txtTroco.clear();
-                    return;
-                }
-
-                txtTroco.setText(String.format("%.2f", pago - total));
-
-            } catch (NumberFormatException e) {
-                AlertaUtil.mostrarErro(
-                        "Valor inválido",
-                        "Digite apenas números no valor pago"
-                );
-                txtTroco.clear();
-            }
-        });
-
     }
 
     private void limparFiltro() {
