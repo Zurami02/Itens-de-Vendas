@@ -10,8 +10,8 @@ public class VendaDAO {
 
         String sql = """
         INSERT INTO venda 
-        (datavenda, idcliente, nomecliente, nuitCliente, pago, taxaiva, valortotal)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (datavenda, idcliente, nomecliente, nuitCliente, pago, taxaiva, valortotal, vd)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -31,6 +31,7 @@ public class VendaDAO {
             ps.setBoolean(5, venda.isPago());
             ps.setDouble(6, venda.getTaxaIva());
             ps.setDouble(7, venda.getTotalFinal());
+            ps.setBoolean(8, venda.isVd());
 
             ps.executeUpdate();
 

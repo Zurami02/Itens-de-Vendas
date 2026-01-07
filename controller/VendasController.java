@@ -267,9 +267,12 @@ public class VendasController implements Initializable {
             conn.commit();
 
             AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
-            System.out.println("Id da Venda: "+venda.getIdVenda()+" \n O cliente: "
-                    +venda.getCliente().getNome()+
-                    " \nOu: "+venda.getNomeCliente());
+            if (venda.getCliente() != null){
+                System.out.println("Id da Venda: "+venda.getIdVenda()+" \n O cliente: "
+                        +venda.getCliente().getNome());
+            }
+            System.out.println("Id da Venda: "+venda.getIdVenda()+
+                    " \nO Cliente : "+venda.getNomeCliente());
             if (venda.isVd()) {
                 imprimirVD(venda);
             }
@@ -661,7 +664,9 @@ public class VendasController implements Initializable {
         txtDinheiroPago.clear();
         txtIVA.clear();
         txtTroco.clear();
-
+        checkBoxVD.setSelected(false);
+        checkBoxIVA.setSelected(false);
+        checkBoxClienteNaoRegistado.setSelected(false);
         comboBoxClientenoSistema.getSelectionModel().clearSelection();
     }
 
