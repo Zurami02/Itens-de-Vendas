@@ -69,7 +69,6 @@ public class VendasController implements Initializable {
     @FXML
     private TableColumn<Produtos, String> colunaProdutoProdutoDoSistema;
 
-
     @FXML
     private TableView<Itemvenda> tableViewCarrinho;
 
@@ -132,10 +131,9 @@ public class VendasController implements Initializable {
     private TextField txtTroco;
 
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
-    private final ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
+    private ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
     private VendaDAO vendaDAO = new VendaDAO();
 
-    private Produtos produto;
     private Venda venda = new Venda();
     private Itemvenda itemvenda;
 
@@ -155,7 +153,7 @@ public class VendasController implements Initializable {
 
         if (produto == null) {
             AlertaUtil.piscarVermelho(tableviewProdutoDoSistema);
-            //AlertaUtil.mostrarErro("Produto", "Selecione um produto");
+            AlertaUtil.mostrarErro("Produto", "Selecione um produto");
             return;
         }
 
@@ -176,6 +174,7 @@ public class VendasController implements Initializable {
 
         if (qtd <= 0 || qtd > produto.getQuantidadeEstoque()) {
             AlertaUtil.mostrarErro("Quantidade", "Quantidade inválida ou sem estoque");
+            AlertaUtil.piscarVermelho(txtQuantidade);
             return;
         }
 
@@ -245,9 +244,6 @@ public class VendasController implements Initializable {
         if (txtDinheiroPago.getText().isBlank()) {
             piscarVermelho(txtDinheiroPago);
             txtDinheiroPago.setPromptText("Falta pagamento");
-            //AlertaUtil.
-                    //mostrarAviso("Falta pagamento",
-                            //"Certifique que o Cliente pagou");
             return;
         }
 
@@ -262,16 +258,18 @@ public class VendasController implements Initializable {
 
             conn.setAutoCommit(false);
 
-            VendaDAO vendaDAO = new VendaDAO();
-            ItemvendaDAO itemDAO = new ItemvendaDAO();
+            vendaDAO = new VendaDAO();
+            itemvendaDAO = new ItemvendaDAO();
 
             int idVenda = vendaDAO.salvarVenda(conn, venda);
-            itemDAO.salvarItens(conn, idVenda, venda.getItens());
+            itemvendaDAO.salvarItens(conn, idVenda, venda.getItens());
 
             conn.commit();
 
             AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
-            System.out.println(venda);
+            System.out.println("Id da Venda: "+venda.getIdVenda()+" \n O cliente: "
+                    +venda.getCliente().getNome()+
+                    " \nOu: "+venda.getNomeCliente());
             if (venda.isVd()) {
                 imprimirVD(venda);
             }
@@ -476,9 +474,16 @@ public class VendasController implements Initializable {
         listenerPesquisaProduto();
         listenerCliente();
         listenerIVA();
+        listenerVD();
         listenerPagamento();
         txtCliente.setDisable(true);
         txtNuit.setDisable(true);
+    }
+
+    private void listenerVD() {
+        checkBoxVD.selectedProperty().addListener((obs, oldValue, marcado) -> {
+            venda.setVd(marcado);
+        });
     }
 
     private void listenerPesquisaProduto() {
@@ -630,7 +635,6 @@ public class VendasController implements Initializable {
         if (nome.isEmpty()) {
             AlertaUtil.piscarVermelho(comboBoxClientenoSistema);
             AlertaUtil.piscarVermelho(txtCliente);
-            //AlertaUtil.mostrarErro("Cliente", "Informe o nome do cliente.");
             return false;
         }
 
@@ -662,11 +666,15 @@ public class VendasController implements Initializable {
     }
 
     private void imprimirVD(Venda venda) {
+        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$VD$$$$$$$$$$$$$$$$$$$$$$$$$");
         System.out.println("Imprimindo VD da venda " + venda.getIdVenda());
+        if (venda.getCliente() == null){
+            System.out.println("Nome do Cliente: "+venda.getNomeCliente());
+        }else {
+            System.out.println("Nome do Cliente: "+venda.getCliente().getNome());
+        }
         // futuramente:
         // JasperFillManager.fillReport(...)
         // JasperViewer.viewReport(...)
     }
-
-
 }
