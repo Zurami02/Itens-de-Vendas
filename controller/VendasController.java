@@ -11,18 +11,21 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import mbtec.com.mz.itemvendatest.DAO.ClienteDAO;
-import mbtec.com.mz.itemvendatest.DAO.ItemvendaDAO;
-import mbtec.com.mz.itemvendatest.DAO.ProdutosDAO;
-import mbtec.com.mz.itemvendatest.DAO.VendaDAO;
+import mbtec.com.mz.itemvendatest.DAO.*;
 import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
 import mbtec.com.mz.itemvendatest.domain.Cliente;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
@@ -30,11 +33,13 @@ import mbtec.com.mz.itemvendatest.domain.Produtos;
 import mbtec.com.mz.itemvendatest.domain.Venda;
 import mbtec.com.mz.itemvendatest.service.AlertaUtil;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -98,6 +103,9 @@ public class VendasController implements Initializable {
     private Label lbDataHora;
 
     @FXML
+    private Label lbTAXAIVAVendas;
+
+    @FXML
     private TextField txtCliente;
 
     @FXML
@@ -130,12 +138,16 @@ public class VendasController implements Initializable {
     @FXML
     private TextField txtTroco;
 
+    @FXML
+    private TextField txtInputIVA;
+
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
     private ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
     private VendaDAO vendaDAO = new VendaDAO();
 
     private Venda venda = new Venda();
     private Itemvenda itemvenda;
+    private double iva;
 
     private List<Produtos> produtosList;                // lista vinda do DAO
     private ObservableList<Produtos> produtosObservableList; // lista base da TableView
@@ -192,6 +204,31 @@ public class VendasController implements Initializable {
         //atualizarTotalVenda();
         atualizarValoresVenda();
         limparCamposItem();
+    }
+
+    @FXML
+    void btnAdicionarIVA(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/mbtec/com/mz/itemvendatest/iva.fxml"));
+            Parent root = loader.load();
+
+            Scene scene = new Scene(root);
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setTitle("Cadastro de IVA");
+            stage.centerOnScreen();
+            stage.getIcons().add(
+                    new Image(Objects.requireNonNull(AlertaUtil.class.
+                            getResourceAsStream("/mbtec/com/mz/itemvendatest/icones/mbtecShort.png")))
+            );
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace(); // Trate a exceção adequadamente
+        }
     }
 
     @FXML
@@ -514,10 +551,13 @@ public class VendasController implements Initializable {
     }
 
     private void listenerIVA() {
-        checkBoxIVA.selectedProperty().addListener((obs, oldValue, marcado) -> {
 
+        iva = Double.parseDouble(Objects.requireNonNull(ConfiguracaoDAO.buscarPorChave("IVA")).getValor());
+        lbTAXAIVAVendas.setText("IVA ("+iva+"%)");
+        checkBoxIVA.selectedProperty().addListener((obs, oldValue, marcado) -> {
             if (marcado) {
-                venda.setTaxaIva(0.17);
+                venda.setTaxaIva(iva);
+                lbTAXAIVAVendas.setText("IVA ("+iva+"%)");
             } else {
                 venda.setTaxaIva(0.0);
             }

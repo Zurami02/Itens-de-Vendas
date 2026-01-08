@@ -99,7 +99,7 @@ public class Venda {
     }
 
     public void setTaxaIva(double taxaIva) {
-        this.taxaIva = taxaIva;
+        this.taxaIva = taxaIva/100;
     }
 
     public List<Itemvenda> getItens() {
@@ -128,7 +128,7 @@ public class Venda {
 
     @Override
     public String toString() {
-        return "Venda #" + idVenda +
+        return "Venda: " + idVenda +
                 " | Data: " + dataVenda +
                 " | Total: " + getTotalFinal();
     }
