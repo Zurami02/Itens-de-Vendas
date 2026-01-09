@@ -148,4 +148,42 @@ public class ProdutosDAO {
         return produtosList;
     }
 
+    public boolean temEstoqueSuficiente(int idProduto, int quantidade) {
+
+        String sql = "SELECT quantidade FROM produto WHERE idproduto = ?";
+
+        try (Connection conn = ConexaoSQLite.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idProduto);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("quantidade") >= quantidade;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public void baixarEstoque(Connection conn, int idProduto, int quantidadeVendida)
+            throws SQLException {
+
+        String sql = """
+        UPDATE produto
+        SET quantidade = quantidade - ?
+        WHERE idproduto = ?
+    """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantidadeVendida);
+            ps.setInt(2, idProduto);
+            ps.executeUpdate();
+        }
+    }
+
+
 }
