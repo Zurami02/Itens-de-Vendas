@@ -277,12 +277,30 @@ public class VendasController implements Initializable {
 
     @FXML
     void btnFinalizar(ActionEvent event) {
+        String texto = txtDinheiroPago.getText();
+        double pago = Double.parseDouble(texto);
+        double total = venda.getTotalFinal();
 
-        if (txtDinheiroPago.getText().isBlank()) {
+        if (texto.isBlank()) {
             piscarVermelho(txtDinheiroPago);
             txtDinheiroPago.setPromptText("Falta pagamento");
             return;
         }
+
+        try {
+
+            if (pago >= total) {
+                txtTroco.setText(String.format("%.2f", pago - total));
+            } else {
+                txtTroco.clear();
+                AlertaUtil.piscarVermelho(txtDinheiroPago);
+                return;
+            }
+
+        } catch (NumberFormatException e) {
+            txtTroco.clear();
+        }
+
 
         if (venda.getItens().isEmpty()) {
             AlertaUtil.mostrarErro("Venda", "Carrinho vazio.");
