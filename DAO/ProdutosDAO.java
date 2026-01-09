@@ -150,7 +150,7 @@ public class ProdutosDAO {
 
     public boolean temEstoqueSuficiente(int idProduto, int quantidade) {
 
-        String sql = "SELECT quantidade FROM produto WHERE idproduto = ?";
+        String sql = "SELECT quantidade FROM produtos WHERE idproduto = ?";
 
         try (Connection conn = ConexaoSQLite.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -173,7 +173,7 @@ public class ProdutosDAO {
             throws SQLException {
 
         String sql = """
-        UPDATE produto
+        UPDATE produtos
         SET quantidade = quantidade - ?
         WHERE idproduto = ?
     """;

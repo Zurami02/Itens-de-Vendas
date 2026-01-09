@@ -30,6 +30,25 @@ public class ItemvendaDAO {
             ps.executeBatch();
         }
     }
+    public void salvarItem(Connection conn, int idVenda, Itemvenda item)
+            throws SQLException {
+
+        String sql = """
+        INSERT INTO itemvenda
+        (idvenda, idproduto, quantidade, precounitario, desconto)
+        VALUES (?, ?, ?, ?, ?)
+    """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idVenda);
+            ps.setInt(2, item.getProduto().getIdProduto());
+            ps.setInt(3, item.getQuantidade());
+            ps.setDouble(4, item.getPrecoUnitario());
+            ps.setDouble(5, item.getDesconto());
+            ps.executeUpdate();
+        }
+    }
+
 
 
 }

@@ -2,8 +2,6 @@ package mbtec.com.mz.itemvendatest.controller;
 
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -23,7 +21,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import javafx.util.StringConverter;
 import mbtec.com.mz.itemvendatest.DAO.*;
 import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
@@ -40,7 +37,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -138,9 +134,6 @@ public class VendasController implements Initializable {
     @FXML
     private TextField txtTroco;
 
-    @FXML
-    private TextField txtInputIVA;
-
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
     private ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
     private VendaDAO vendaDAO = new VendaDAO();
@@ -160,8 +153,7 @@ public class VendasController implements Initializable {
     @FXML
     void btnAdicionarCarrinho(ActionEvent event) {
 
-        Produtos produto = tableviewProdutoDoSistema
-                .getSelectionModel().getSelectedItem();
+        Produtos produto = tableviewProdutoDoSistema.getSelectionModel().getSelectedItem();
 
         if (produto == null) {
             AlertaUtil.piscarVermelho(tableviewProdutoDoSistema);
@@ -180,23 +172,16 @@ public class VendasController implements Initializable {
         } catch (NumberFormatException e) {
             AlertaUtil.piscarVermelho(txtQuantidade);
             AlertaUtil.piscarVermelho(txtDesconto);
-            //AlertaUtil.mostrarErro("Erro", "Quantidade ou desconto inválido");
             return;
         }
 
-        if (qtd <= 0 || qtd > produto.getQuantidadeEstoque()) {
-            AlertaUtil.mostrarErro("Quantidade", "Quantidade inválida ou sem estoque");
+        if (!produtosDAO.temEstoqueSuficiente(produto.getIdProduto(), qtd)) {
             AlertaUtil.piscarVermelho(txtQuantidade);
+            AlertaUtil.mostrarErro("Stock insuficiente", "Quantidade disponível: " + produto.getQuantidadeEstoque());
             return;
         }
 
-        itemvenda = new Itemvenda(
-                produto,
-                qtd,
-                produto.getPreco(),
-                desconto,
-                venda
-        );
+        itemvenda = new Itemvenda(produto, qtd, produto.getPreco(), desconto, venda);
 
         venda.adicionarItem(itemvenda);
         itemvendaObservableList.add(itemvenda);
@@ -209,8 +194,7 @@ public class VendasController implements Initializable {
     @FXML
     void btnAdicionarIVA(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/mbtec/com/mz/itemvendatest/iva.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/mbtec/com/mz/itemvendatest/iva.fxml"));
             Parent root = loader.load();
 
             Scene scene = new Scene(root);
@@ -220,10 +204,7 @@ public class VendasController implements Initializable {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setTitle("Cadastro de IVA");
             stage.centerOnScreen();
-            stage.getIcons().add(
-                    new Image(Objects.requireNonNull(AlertaUtil.class.
-                            getResourceAsStream("/mbtec/com/mz/itemvendatest/icones/mbtecShort.png")))
-            );
+            stage.getIcons().add(new Image(Objects.requireNonNull(AlertaUtil.class.getResourceAsStream("/mbtec/com/mz/itemvendatest/icones/mbtecShort.png"))));
             stage.showAndWait();
 
         } catch (IOException e) {
@@ -259,8 +240,7 @@ public class VendasController implements Initializable {
 
         for (Produtos p : produtosList) {
             if (p.getIdProduto() == codigo) {
-                produtosFilteredList.setPredicate(prod ->
-                        prod.getIdProduto() == codigo);
+                produtosFilteredList.setPredicate(prod -> prod.getIdProduto() == codigo);
 
                 tableviewProdutoDoSistema.getSelectionModel().select(p);
                 encontrado = true;
@@ -270,37 +250,12 @@ public class VendasController implements Initializable {
 
         if (!encontrado) {
             AlertaUtil.piscarVermelho(txtCodigoProdutoPesquisa);
-            AlertaUtil.mostrarErro("Produto não encontrado",
-                    "Nenhum produto com esse código");
+            AlertaUtil.mostrarErro("Produto não encontrado", "Nenhum produto com esse código");
         }
     }
 
     @FXML
     void btnFinalizar(ActionEvent event) {
-        String texto = txtDinheiroPago.getText();
-        double pago = Double.parseDouble(texto);
-        double total = venda.getTotalFinal();
-
-        if (texto.isBlank()) {
-            piscarVermelho(txtDinheiroPago);
-            txtDinheiroPago.setPromptText("Falta pagamento");
-            return;
-        }
-
-        try {
-
-            if (pago >= total) {
-                txtTroco.setText(String.format("%.2f", pago - total));
-            } else {
-                txtTroco.clear();
-                AlertaUtil.piscarVermelho(txtDinheiroPago);
-                return;
-            }
-
-        } catch (NumberFormatException e) {
-            txtTroco.clear();
-        }
-
 
         if (venda.getItens().isEmpty()) {
             AlertaUtil.mostrarErro("Venda", "Carrinho vazio.");
@@ -308,6 +263,32 @@ public class VendasController implements Initializable {
         }
 
         if (!validarCliente()) return;
+
+        String texto = txtDinheiroPago.getText();
+
+        if (texto == null || texto.isBlank()) {
+            AlertaUtil.piscarVermelho(txtDinheiroPago);
+            txtDinheiroPago.setPromptText("Falta pagamento");
+            return;
+        }
+
+        double pago;
+        double total = venda.getTotalFinal();
+
+        try {
+            pago = Double.parseDouble(texto);
+        } catch (NumberFormatException e) {
+            AlertaUtil.mostrarErro("Pagamento", "Valor inválido.");
+            return;
+        }
+
+        if (pago < total) {
+            AlertaUtil.piscarVermelho(txtDinheiroPago);
+            txtTroco.clear();
+            return;
+        }
+
+        txtTroco.setText(String.format("%.2f", pago - total));
 
         try (Connection conn = ConexaoSQLite.getConnection()) {
 
@@ -317,17 +298,19 @@ public class VendasController implements Initializable {
             itemvendaDAO = new ItemvendaDAO();
 
             int idVenda = vendaDAO.salvarVenda(conn, venda);
-            itemvendaDAO.salvarItens(conn, idVenda, venda.getItens());
+
+            for (Itemvenda item : venda.getItens()) {
+                itemvendaDAO.salvarItem(conn, idVenda, item);
+
+                produtosDAO.baixarEstoque(conn, item.getProduto().getIdProduto(), item.getQuantidade());
+            }
 
             conn.commit();
 
             AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
-            if (venda.getCliente() != null){
-                System.out.println("Id da Venda: "+venda.getIdVenda()+" \n O cliente: "
-                        +venda.getCliente().getNome());
-            }
-            System.out.println("Id da Venda: "+venda.getIdVenda()+
-                    " \nO Cliente : "+venda.getNomeCliente());
+
+            carregarTableViewProdutosNoSistema();
+
             if (venda.isVd()) {
                 imprimirVD(venda);
             }
@@ -346,8 +329,7 @@ public class VendasController implements Initializable {
 
     @FXML
     void btnRemoverItem(ActionEvent event) {
-        Itemvenda itemSelecionado =
-                tableViewCarrinho.getSelectionModel().getSelectedItem();
+        Itemvenda itemSelecionado = tableViewCarrinho.getSelectionModel().getSelectedItem();
 
         if (itemSelecionado == null) {
             AlertaUtil.piscarVermelho(tableViewCarrinho);
@@ -374,7 +356,7 @@ public class VendasController implements Initializable {
         carregarTableViewCarrinho();
     }
 
-    private void controloClienteNaoRegistado(){
+    private void controloClienteNaoRegistado() {
         boolean marcado = checkBoxClienteNaoRegistado.isSelected();
 
         if (marcado) {
@@ -413,53 +395,16 @@ public class VendasController implements Initializable {
     }
 
     private void carregarTableViewCarrinho() {
-        colunaProdutoCarrinho.setCellValueFactory(data ->
-                new SimpleStringProperty(
-                        data.getValue().getProduto().getDescricao()
-                )
-        );
+        colunaProdutoCarrinho.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getProduto().getDescricao()));
 
         colunaQTDCarrinho.setCellValueFactory(new PropertyValueFactory<>("quantidade"));
 
-        colunaPrecoUnitarioCarrinho.setCellValueFactory(
-                new PropertyValueFactory<>("precoUnitario")
-        );
+        colunaPrecoUnitarioCarrinho.setCellValueFactory(new PropertyValueFactory<>("precoUnitario"));
 
-        colunaDescontoCarrinho.setCellValueFactory(
-                new PropertyValueFactory<>("desconto")
-        );
+        colunaDescontoCarrinho.setCellValueFactory(new PropertyValueFactory<>("desconto"));
 
         // total calculado (SEM atributo!)
-        colunaTotalCarrinho.setCellValueFactory(data ->
-                new SimpleDoubleProperty(
-                        data.getValue().getTotalComDesconto()
-                ).asObject()
-        );
-    }
-
-    /**
-     * Piscando vermelho para dar erro a um campo textField
-     * @param campo
-     */
-
-    private void piscarVermelho(Control campo) {
-
-        String estiloErro = """
-        -fx-border-color: red;
-        -fx-background-color: #ffeeee;
-        -fx-prompt-text-fill: red;
-    """;
-
-        String estiloNormal = "";
-
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.ZERO, e -> campo.setStyle(estiloErro)),
-                new KeyFrame(Duration.seconds(1), e -> campo.setStyle(estiloNormal))
-        );
-
-        timeline.setCycleCount(3);
-        timeline.setAutoReverse(true);
-        timeline.play();
+        colunaTotalCarrinho.setCellValueFactory(data -> new SimpleDoubleProperty(data.getValue().getTotalComDesconto()).asObject());
     }
 
     private void limparCamposItem() {
@@ -479,8 +424,7 @@ public class VendasController implements Initializable {
 
         // Adiciona um listener para o editor de texto do ComboBox
         comboBoxClientenoSistema.setEditable(true);
-        comboBoxClientenoSistema.getEditor().textProperty().addListener((obs,
-                                                                         oldValue, newValue) -> {
+        comboBoxClientenoSistema.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
             final String filtro = newValue.toLowerCase().trim();
 
             clienteFiltrados.setPredicate(cliente -> {
@@ -504,9 +448,7 @@ public class VendasController implements Initializable {
 
             @Override
             public Cliente fromString(String string) {
-                return clienteObservableList.stream()
-                        .filter(c -> c.getNome().equals(string))
-                        .findFirst().orElse(null);
+                return clienteObservableList.stream().filter(c -> c.getNome().equals(string)).findFirst().orElse(null);
             }
         });
     }
@@ -521,9 +463,7 @@ public class VendasController implements Initializable {
                     return true;
                 }
 
-                return produto.getDescricao()
-                        .toLowerCase()
-                        .contains(newValue.toLowerCase());
+                return produto.getDescricao().toLowerCase().contains(newValue.toLowerCase());
             });
         });
     }
@@ -571,11 +511,11 @@ public class VendasController implements Initializable {
     private void listenerIVA() {
 
         iva = Double.parseDouble(Objects.requireNonNull(ConfiguracaoDAO.buscarPorChave("IVA")).getValor());
-        lbTAXAIVAVendas.setText("IVA ("+iva+"%)");
+        lbTAXAIVAVendas.setText("IVA (" + iva + "%)");
         checkBoxIVA.selectedProperty().addListener((obs, oldValue, marcado) -> {
             if (marcado) {
                 venda.setTaxaIva(iva);
-                lbTAXAIVAVendas.setText("IVA ("+iva+"%)");
+                lbTAXAIVAVendas.setText("IVA (" + iva + "%)");
             } else {
                 venda.setTaxaIva(0.0);
             }
@@ -613,10 +553,6 @@ public class VendasController implements Initializable {
 
             if (pago < total) {
                 AlertaUtil.piscarVermelho(txtDinheiroPago);
-//                AlertaUtil.mostrarAviso(
-//                        "Valor inválido",
-//                        "O valor pago não pode ser menor que o total"
-//                );
                 txtTroco.clear();
                 return;
             }
@@ -671,11 +607,9 @@ public class VendasController implements Initializable {
 
         produtosList = produtosDAO.listar();
 
-        produtosObservableList =
-                FXCollections.observableArrayList(produtosList);
+        produtosObservableList = FXCollections.observableArrayList(produtosList);
 
-        produtosFilteredList =
-                new FilteredList<>(produtosObservableList, p -> true);
+        produtosFilteredList = new FilteredList<>(produtosObservableList, p -> true);
 
         tableviewProdutoDoSistema.setItems(produtosFilteredList);
     }
@@ -731,13 +665,14 @@ public class VendasController implements Initializable {
     private void imprimirVD(Venda venda) {
         System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$VD$$$$$$$$$$$$$$$$$$$$$$$$$");
         System.out.println("Imprimindo VD da venda " + venda.getIdVenda());
-        if (venda.getCliente() == null){
-            System.out.println("Nome do Cliente: "+venda.getNomeCliente());
-        }else {
-            System.out.println("Nome do Cliente: "+venda.getCliente().getNome());
+        if (venda.getCliente() == null) {
+            System.out.println("Nome do Cliente: " + venda.getNomeCliente());
+        } else {
+            System.out.println("Nome do Cliente: " + venda.getCliente().getNome());
         }
         // futuramente:
         // JasperFillManager.fillReport(...)
         // JasperViewer.viewReport(...)
     }
+
 }
