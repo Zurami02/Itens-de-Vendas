@@ -2,6 +2,7 @@ package mbtec.com.mz.itemvendatest.controller;
 
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
+import javafx.animation.FadeTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,6 +22,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import mbtec.com.mz.itemvendatest.DAO.*;
 import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
@@ -29,6 +31,7 @@ import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
 import mbtec.com.mz.itemvendatest.domain.Venda;
 import mbtec.com.mz.itemvendatest.service.AlertaUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -133,6 +136,10 @@ public class VendasController implements Initializable {
 
     @FXML
     private TextField txtTroco;
+
+    @FXML
+    private Label lbFeedBack;
+
 
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
     private ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
@@ -300,15 +307,25 @@ public class VendasController implements Initializable {
             int idVenda = vendaDAO.salvarVenda(conn, venda);
 
             for (Itemvenda item : venda.getItens()) {
-                itemvendaDAO.salvarItem(conn, idVenda, item);
+                Produtos produto = item.getProduto();
 
-                produtosDAO.baixarEstoque(conn, item.getProduto().getIdProduto(), item.getQuantidade());
+                itemvendaDAO.salvarItem(conn, idVenda, item);
+                try {
+                    produtosDAO.baixarEstoqueControlador(conn, item.getProduto().getIdProduto(), item.getQuantidade());
+                }catch (IllegalStateException e){
+                    AlertaUtil.mostrarErro("Estoque",e.getMessage());
+                    conn.rollback();
+                    return;
+                }
+                produto.setQuantidadeEstoque(produto.getQuantidadeEstoque()-item.getQuantidade());
             }
 
             conn.commit();
 
-            AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
+            tableviewProdutoDoSistema.refresh();
 
+            //AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
+            mostrarFeedback();
             carregarTableViewProdutosNoSistema();
 
             if (venda.isVd()) {
@@ -662,7 +679,7 @@ public class VendasController implements Initializable {
         comboBoxClientenoSistema.getSelectionModel().clearSelection();
     }
 
-    private void imprimirVD(Venda venda) {
+    private void imprimirVD(@NotNull Venda venda) {
         System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$VD$$$$$$$$$$$$$$$$$$$$$$$$$");
         System.out.println("Imprimindo VD da venda " + venda.getIdVenda());
         if (venda.getCliente() == null) {
@@ -673,6 +690,32 @@ public class VendasController implements Initializable {
         // futuramente:
         // JasperFillManager.fillReport(...)
         // JasperViewer.viewReport(...)
+    }
+
+    private void mostrarFeedback() {
+
+        lbFeedBack.setText("Venda finalizada com sucesso");
+        lbFeedBack.setStyle(
+                "-fx-background-color:" + "#2ecc71" + ";" +
+                        "-fx-padding:12 30;" +
+                        "-fx-background-radius:8;" +
+                        "-fx-text-fill:white;" +
+                        "-fx-font-size:14px;"
+        );
+
+        lbFeedBack.setOpacity(1);
+        lbFeedBack.setVisible(true);
+
+        // Piscar 2 vezes
+        FadeTransition fade = new FadeTransition(Duration.seconds(3), lbFeedBack);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+        fade.setCycleCount(3); // 2 piscas
+        fade.setAutoReverse(true);
+
+        fade.setOnFinished(e -> lbFeedBack.setVisible(false));
+
+        fade.play();
     }
 
 }

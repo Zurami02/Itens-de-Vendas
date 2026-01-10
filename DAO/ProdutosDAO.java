@@ -3,6 +3,7 @@ package mbtec.com.mz.itemvendatest.DAO;
 import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
 import mbtec.com.mz.itemvendatest.domain.Categoria;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 
 
 public class ProdutosDAO {
-    public boolean inserir(Produtos produto) {
+    public boolean inserir(@NotNull Produtos produto) {
         String sql = "INSERT INTO produtos (descricao, quantidade, preco, idcategoria) VALUES (?,?,?,?)";
         try (Connection connection = ConexaoSQLite.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -81,7 +82,7 @@ public class ProdutosDAO {
     }
 
 
-    public boolean editar(Produtos produto) {
+    public boolean editar(@NotNull Produtos produto) {
         String sql = "UPDATE produtos SET descricao=?, quantidade=?,  preco=?, idcategoria=? WHERE idproduto=?";
         try (Connection connection = ConexaoSQLite.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -100,7 +101,7 @@ public class ProdutosDAO {
         }
     }
 
-    public boolean remover(Produtos produto) {
+    public boolean remover(@NotNull Produtos produto) {
         String sql = "DELETE FROM produtos WHERE idproduto=?";
         try (Connection connection = ConexaoSQLite.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -169,7 +170,7 @@ public class ProdutosDAO {
         return false;
     }
 
-    public void baixarEstoque(Connection conn, int idProduto, int quantidadeVendida)
+    public void baixarEstoque(@NotNull Connection conn, int idProduto, int quantidadeVendida)
             throws SQLException {
 
         String sql = """
@@ -182,6 +183,29 @@ public class ProdutosDAO {
             ps.setInt(1, quantidadeVendida);
             ps.setInt(2, idProduto);
             ps.executeUpdate();
+        }
+    }
+
+    public void baixarEstoqueControlador(@NotNull Connection conn, int idProduto, int quantidadeVendida)
+            throws SQLException {
+
+        String sql = """
+                    UPDATE produtos
+                    SET quantidade = quantidade - ?
+                    WHERE idproduto = ?
+                    AND quantidade >=?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantidadeVendida);
+            ps.setInt(2, idProduto);
+            ps.setInt(3, quantidadeVendida);
+
+            int linhas = ps.executeUpdate();
+
+            if (linhas == 0){
+                throw new IllegalStateException("Estoque insuficiente para o produto");
+            }
         }
     }
 

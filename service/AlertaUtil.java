@@ -85,4 +85,25 @@ public class AlertaUtil {
         timeline.setAutoReverse(true);
         timeline.play();
     }
+
+    public static void piscarSucesso(Control campo) {
+
+        String estiloErro = """
+                    -fx-border-color: green;
+                    -fx-background-color: #2ecc71;
+                    -fx-prompt-text-fill: green;
+                """;
+
+        String estiloNormal = "";
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, e -> campo.setStyle(estiloErro)),
+                new KeyFrame(Duration.seconds(1), e -> campo.setStyle(estiloNormal))
+        );
+
+        timeline.setCycleCount(3);
+        timeline.setAutoReverse(true);
+        timeline.play();
+    }
+
 }
