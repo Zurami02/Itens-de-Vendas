@@ -42,6 +42,10 @@ public class Venda {
         this.taxaIva = taxaIva;
     }
 
+    public void setDataVenda(LocalDateTime dataVenda) {
+        this.dataVenda = dataVenda;
+    }
+
     public boolean isVd() {
         return vd;
     }

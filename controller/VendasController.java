@@ -85,7 +85,6 @@ public class VendasController implements Initializable {
     @FXML
     private TableColumn<Itemvenda, String> colunaProdutoCarrinho;
 
-
     @FXML
     private TableColumn<Itemvenda, Integer> colunaQTDCarrinho;
 
@@ -139,7 +138,6 @@ public class VendasController implements Initializable {
 
     @FXML
     private Label lbFeedBack;
-
 
     private final ProdutosDAO produtosDAO = new ProdutosDAO();
     private ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
