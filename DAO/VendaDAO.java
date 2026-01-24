@@ -93,7 +93,6 @@ public class VendaDAO {
         try (Connection conn = ConexaoSQLite.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // ---- Data inicial ----
             if (dataInicial == null) {
                 ps.setNull(1, Types.DATE);
                 ps.setNull(2, Types.DATE);
@@ -102,7 +101,6 @@ public class VendaDAO {
                 ps.setString(2, dataInicial.toString());
             }
 
-            // ---- Data final ----
             if (dataFinal == null) {
                 ps.setNull(3, Types.DATE);
                 ps.setNull(4, Types.DATE);
@@ -111,7 +109,6 @@ public class VendaDAO {
                 ps.setString(4, dataFinal.toString());
             }
 
-            // ---- Texto cliente ----
             if (textoCliente == null || textoCliente.isBlank()) {
                 ps.setNull(5, Types.VARCHAR);
                 ps.setNull(6, Types.VARCHAR);
@@ -132,13 +129,13 @@ public class VendaDAO {
                 venda.setPago(rs.getBoolean("pago"));
                 venda.setValorIVA(rs.getDouble("taxaiva"));
 
-                String dataStr = rs.getString("datavenda");
-
-                if (dataStr.contains(".")) {
-                    dataStr = dataStr.substring(0, 19);
-                }
-                venda.setDataVenda(LocalDateTime.parse(dataStr));
-
+                LocalDateTime dataPura = LocalDateTime.parse(
+                        rs.getString("datavenda").replace(" ", "T"));
+                LocalDateTime dataLimpa =dataPura.withNano(0);
+                //String dataStr = rs.getString("datavenda");
+                //LocalDateTime data = LocalDateTime.parse(dataStr.replace(" ", "T"));
+                System.out.println("Data de db: "+dataLimpa);
+                venda.setDataVenda(dataLimpa);
 
                 // Cliente registado ou não
                 int idCliente = rs.getInt("idcliente");

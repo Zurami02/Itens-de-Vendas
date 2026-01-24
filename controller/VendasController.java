@@ -49,6 +49,8 @@ import java.util.ResourceBundle;
 
 public class VendasController implements Initializable {
 
+
+
     @FXML
     private AnchorPane anchorPaneMain;
 
@@ -162,7 +164,6 @@ public class VendasController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/mbtec/com/mz/itemvendatest/historicovendas.fxml"));
             Parent root = loader.load();
-
             Scene scene = new Scene(root);
             Stage stage = new Stage();
             stage.setScene(scene);
@@ -515,6 +516,7 @@ public class VendasController implements Initializable {
         listenerPagamento();
         txtCliente.setDisable(true);
         txtNuit.setDisable(true);
+        listenerAtualizarTabelaProdutosNoSistema();
     }
 
     private void listenerVD() {
@@ -576,6 +578,19 @@ public class VendasController implements Initializable {
                 venda.setCliente(novo);
             }
         });
+    }
+
+    private void listenerAtualizarTabelaProdutosNoSistema(){
+        Stage stage = new Stage();
+        stage.focusedProperty().addListener((obs, old, atualizado)->
+                {
+                    if (atualizado){
+                        System.out.println("Atualizados no Sistema");
+                        carregarProdutosNoSistema();
+                        tableviewProdutoDoSistema.refresh();
+                    }
+                }
+                );
     }
 
     private void calcularTroco() {

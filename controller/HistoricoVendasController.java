@@ -157,6 +157,7 @@ public class HistoricoVendasController implements Initializable {
             vs.anularVenda(venda);
         }
         carregarTableViewVendasHistorico();
+        pintarAnulada();
     }
 
 
