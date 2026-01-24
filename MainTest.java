@@ -31,6 +31,16 @@ public class MainTest {
             System.out.println("Produtos: "+item.getProduto().getDescricao()
                     +" "+item.getProduto().getPreco());
         }
+
+        System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%SOMADO%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+
+        int somado = 4;
+        Testado t = new Testado();
+        t.testando(somado);
+        System.out.println(somado);
+        Testado.pCount = 1;
+        Testado.pCount++;
+        System.out.println(Testado.pCount);
     }
 
     private static @NotNull Venda getVenda() {
@@ -56,5 +66,15 @@ public class MainTest {
         v1.adicionarItem(iv3);
         v1.adicionarItem(iv4);
         return v1;
+
+    }
+
+
+}
+
+class Testado {
+    public static int pCount;
+    public void testando(int somado){
+        somado = somado*somado;
     }
 }

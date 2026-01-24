@@ -210,4 +210,15 @@ public class ProdutosDAO {
     }
 
 
+    public void adicionarStock(int idProduto, int quantidade, Connection conn) {
+        String sql = "UPDATE produtos SET quantidade = quantidade + ? WHERE idproduto = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantidade);
+            ps.setInt(2, idProduto);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao devolver stock", e);
+        }
+    }
 }

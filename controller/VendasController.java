@@ -156,6 +156,30 @@ public class VendasController implements Initializable {
     private ObservableList<Cliente> clienteObservableList;
 
     @FXML
+    void historico(ActionEvent event) {
+        System.out.println("btnHistorico clicado");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/mbtec/com/mz/itemvendatest/historicovendas.fxml"));
+            Parent root = loader.load();
+
+            Scene scene = new Scene(root);
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setTitle("Historico de Venda");
+            stage.centerOnScreen();
+            stage.getIcons().add(new Image(Objects.requireNonNull(AlertaUtil.class.getResourceAsStream(
+                    "/mbtec/com/mz/itemvendatest/icones/mbtecShort.png"))));
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
     void btnAdicionarCarrinho(ActionEvent event) {
 
         Produtos produto = tableviewProdutoDoSistema.getSelectionModel().getSelectedItem();
@@ -494,7 +518,8 @@ public class VendasController implements Initializable {
     }
 
     private void listenerVD() {
-        checkBoxVD.selectedProperty().addListener((obs, oldValue, marcado) -> {
+        checkBoxVD.selectedProperty().addListener((obs, oldValue,
+                                                   marcado) -> {
             venda.setVd(marcado);
         });
     }

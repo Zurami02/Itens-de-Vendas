@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,8 +22,10 @@ public class VendaDAO {
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            DateTimeFormatter fmt =
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-            ps.setString(1, venda.getDataVenda().toString());
+            ps.setString(1, venda.getDataVenda().format(fmt));
 
             if (venda.getCliente() != null) {
                 ps.setInt(2, venda.getCliente().getIdcliente());
@@ -57,7 +60,7 @@ public class VendaDAO {
     public List<Venda> historicoVendas(
             LocalDate dataInicial,
             LocalDate dataFinal,
-            String textoPesquisa
+            String textoCliente
     ) {
 
         List<Venda> lista = new ArrayList<>();
@@ -69,15 +72,18 @@ public class VendaDAO {
             v.valortotal,
             v.pago,
             v.taxaiva,
-            c.idcliente,
+            v.idcliente,
+            v.status,
             c.nome        AS nome_registado,
             v.nomecliente AS nome_nao_registado,
             v.nuitcliente
         FROM venda v
         LEFT JOIN cliente c ON c.idcliente = v.idcliente
-        WHERE DATE(v.datavenda) BETWEEN ? AND ?
+        WHERE
+            ( ? IS NULL OR DATE(v.datavenda) >= ? )
+        AND ( ? IS NULL OR DATE(v.datavenda) <= ? )
         AND (
-            ? IS NULL
+               ? IS NULL
             OR c.nome LIKE ?
             OR v.nomecliente LIKE ?
         )
@@ -87,19 +93,34 @@ public class VendaDAO {
         try (Connection conn = ConexaoSQLite.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // Datas
-            ps.setString(1, dataInicial.toString());
-            ps.setString(2, dataFinal.toString());
-
-            // Texto de pesquisa (opcional)
-            if (textoPesquisa == null || textoPesquisa.isBlank()) {
-                ps.setNull(3, Types.VARCHAR);
-                ps.setNull(4, Types.VARCHAR);
-                ps.setNull(5, Types.VARCHAR);
+            // ---- Data inicial ----
+            if (dataInicial == null) {
+                ps.setNull(1, Types.DATE);
+                ps.setNull(2, Types.DATE);
             } else {
-                ps.setString(3, textoPesquisa);
-                ps.setString(4, "%" + textoPesquisa + "%");
-                ps.setString(5, "%" + textoPesquisa + "%");
+                ps.setString(1, dataInicial.toString());
+                ps.setString(2, dataInicial.toString());
+            }
+
+            // ---- Data final ----
+            if (dataFinal == null) {
+                ps.setNull(3, Types.DATE);
+                ps.setNull(4, Types.DATE);
+            } else {
+                ps.setString(3, dataFinal.toString());
+                ps.setString(4, dataFinal.toString());
+            }
+
+            // ---- Texto cliente ----
+            if (textoCliente == null || textoCliente.isBlank()) {
+                ps.setNull(5, Types.VARCHAR);
+                ps.setNull(6, Types.VARCHAR);
+                ps.setNull(7, Types.VARCHAR);
+            } else {
+                String like = "%" + textoCliente + "%";
+                ps.setString(5, textoCliente);
+                ps.setString(6, like);
+                ps.setString(7, like);
             }
 
             ResultSet rs = ps.executeQuery();
@@ -109,12 +130,17 @@ public class VendaDAO {
                 Venda venda = new Venda();
                 venda.setIdVenda(rs.getInt("idvenda"));
                 venda.setPago(rs.getBoolean("pago"));
-                venda.setTaxaIva(rs.getDouble("taxaiva"));
-                venda.setDataVenda(
-                        rs.getTimestamp("datavenda").toLocalDateTime()
-                );
+                venda.setValorIVA(rs.getDouble("taxaiva"));
 
-                // Cliente registado
+                String dataStr = rs.getString("datavenda");
+
+                if (dataStr.contains(".")) {
+                    dataStr = dataStr.substring(0, 19);
+                }
+                venda.setDataVenda(LocalDateTime.parse(dataStr));
+
+
+                // Cliente registado ou não
                 int idCliente = rs.getInt("idcliente");
                 if (!rs.wasNull()) {
                     Cliente c = new Cliente();
@@ -122,10 +148,11 @@ public class VendaDAO {
                     c.setNome(rs.getString("nome_registado"));
                     venda.setCliente(c);
                 } else {
-                    // Cliente não registado
                     venda.setNomeCliente(rs.getString("nome_nao_registado"));
                     venda.setNuitCliente(rs.getString("nuitcliente"));
                 }
+                venda.setStatus(rs.getString("status"));
+                venda.setTotalDb(rs.getDouble("valortotal"));
 
                 lista.add(venda);
             }
@@ -136,5 +163,16 @@ public class VendaDAO {
 
         return lista;
     }
+
+    public void anularVenda(int idvenda, Connection conn){
+        String sql = "UPDATE venda SET status = 'ANULADA' WHERE idvenda =?";
+        try(PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, idvenda);
+            ps.executeUpdate();
+        }catch (SQLException e){
+            throw new RuntimeException("Erro ao anular venda", e);
+        }
+    }
+
 
 }

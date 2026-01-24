@@ -21,12 +21,18 @@ public class Venda {
     private double taxaIva; // ex: 0.17 (17%)
     private List<Itemvenda> itens = new ArrayList<>();
     private boolean vd;
+    private String status;
+
+    //somente para leitura do db para historico de venda
+    private double totalDb;
+    private double valorIVA;
 
     public Venda() {
         this.dataVenda = LocalDateTime.now();
     }
 
-    public Venda(int idVenda, String nomeCliente, String nuitCliente, boolean pago, double taxaIva) {
+    public Venda(int idVenda, String nomeCliente, String nuitCliente,
+                 boolean pago, double taxaIva) {
         this.idVenda = idVenda;
         this.nomeCliente = nomeCliente;
         this.nuitCliente = nuitCliente;
@@ -40,6 +46,35 @@ public class Venda {
         this.cliente = cliente;
         this.pago = pago;
         this.taxaIva = taxaIva;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public boolean isAnulada(){
+        return
+                "ANULADA".equalsIgnoreCase(status);
+    }
+
+    public double getValorIVA() {
+        return valorIVA;
+    }
+
+    public void setValorIVA(double valorIVA) {
+        this.valorIVA = valorIVA;
+    }
+
+    public double getTotalDb() {
+        return totalDb;
+    }
+
+    public void setTotalDb(double totalDb) {
+        this.totalDb = totalDb;
     }
 
     public void setDataVenda(LocalDateTime dataVenda) {
