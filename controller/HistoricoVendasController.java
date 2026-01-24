@@ -111,6 +111,7 @@ public class HistoricoVendasController implements Initializable {
 
     private Venda venda = new Venda();
     private Itemvenda itemvenda;
+    private VendaService vs = new VendaService();
 
     private VendaDAO vendaDAO = new VendaDAO();
     private ItemvendaDAO itemvendaDAO = new ItemvendaDAO();
@@ -152,8 +153,6 @@ public class HistoricoVendasController implements Initializable {
 
         Optional<ButtonType> resultado = alerta.showAndWait();
         if (resultado.isPresent() && resultado.get() == btnSim) {
-            //vendaDAO.anularVenda(venda.getIdVenda());
-            VendaService vs = new VendaService();
             vs.anularVenda(venda);
         }
         carregarTableViewVendasHistorico();
@@ -275,10 +274,6 @@ public class HistoricoVendasController implements Initializable {
 
             List<Itemvenda> itens =
                     itemvendaDAO.listarPorVenda(idVenda);
-        for (Itemvenda i: itens){
-            System.out.println("Produto: "+i.getProduto().getDescricao()+
-                    " \nCodigo: "+i.getProduto().getIdProduto()+" \nPreco: "+i.getProduto().getPreco());
-        }
         tableViewDetalheVenda.setItems(
                 FXCollections.observableArrayList(itens)
         );

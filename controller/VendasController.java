@@ -31,6 +31,7 @@ import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Produtos;
 import mbtec.com.mz.itemvendatest.domain.Venda;
 import mbtec.com.mz.itemvendatest.service.AlertaUtil;
+import mbtec.com.mz.itemvendatest.service.VendaService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -48,8 +49,6 @@ import java.util.ResourceBundle;
  */
 
 public class VendasController implements Initializable {
-
-
 
     @FXML
     private AnchorPane anchorPaneMain;
@@ -159,7 +158,6 @@ public class VendasController implements Initializable {
 
     @FXML
     void historico(ActionEvent event) {
-        System.out.println("btnHistorico clicado");
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/mbtec/com/mz/itemvendatest/historicovendas.fxml"));
@@ -207,7 +205,9 @@ public class VendasController implements Initializable {
 
         if (!produtosDAO.temEstoqueSuficiente(produto.getIdProduto(), qtd)) {
             AlertaUtil.piscarVermelho(txtQuantidade);
-            AlertaUtil.mostrarErro("Stock insuficiente", "Quantidade disponível: " + produto.getQuantidadeEstoque());
+            AlertaUtil.mostrarErro
+                    ("Stock insuficiente", "Quantidade disponível: " +
+                            produto.getQuantidadeEstoque());
             return;
         }
 
@@ -216,7 +216,6 @@ public class VendasController implements Initializable {
         venda.adicionarItem(itemvenda);
         itemvendaObservableList.add(itemvenda);
 
-        //atualizarTotalVenda();
         atualizarValoresVenda();
         limparCamposItem();
     }
@@ -234,11 +233,12 @@ public class VendasController implements Initializable {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setTitle("Cadastro de IVA");
             stage.centerOnScreen();
-            stage.getIcons().add(new Image(Objects.requireNonNull(AlertaUtil.class.getResourceAsStream("/mbtec/com/mz/itemvendatest/icones/mbtecShort.png"))));
+            stage.getIcons().add(new Image
+                    (Objects.requireNonNull(AlertaUtil.class.getResourceAsStream("/mbtec/com/mz/itemvendatest/icones/mbtecShort.png"))));
             stage.showAndWait();
 
         } catch (IOException e) {
-            e.printStackTrace(); // Trate a exceção adequadamente
+            e.printStackTrace();
         }
     }
 
@@ -335,19 +335,18 @@ public class VendasController implements Initializable {
                 itemvendaDAO.salvarItem(conn, idVenda, item);
                 try {
                     produtosDAO.baixarEstoqueControlador(conn, item.getProduto().getIdProduto(), item.getQuantidade());
-                }catch (IllegalStateException e){
-                    AlertaUtil.mostrarErro("Estoque",e.getMessage());
+                } catch (IllegalStateException e) {
+                    AlertaUtil.mostrarErro("Estoque", e.getMessage());
                     conn.rollback();
                     return;
                 }
-                produto.setQuantidadeEstoque(produto.getQuantidadeEstoque()-item.getQuantidade());
+                produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - item.getQuantidade());
             }
 
             conn.commit();
 
             tableviewProdutoDoSistema.refresh();
 
-            //AlertaUtil.mostrarInfo("Venda", "Venda finalizada com sucesso.");
             mostrarFeedback();
             carregarTableViewProdutosNoSistema();
 
@@ -394,6 +393,7 @@ public class VendasController implements Initializable {
         inicializarListeners();
         tableViewCarrinho.setItems(itemvendaObservableList);
         carregarTableViewCarrinho();
+        listenerAtualizarTabelaProdutosNoSistema();
     }
 
     private void controloClienteNaoRegistado() {
@@ -426,25 +426,18 @@ public class VendasController implements Initializable {
     private void carregarTableViewProdutosNoSistema() {
         colunaCodigoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("idProduto"));
         colunaProdutoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("descricao"));
-
-        DateTimeFormatter dataEntrada = DateTimeFormatter.ofPattern("yyy-MM-dd");
-        DateTimeFormatter datasaida = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
         colunaPrecoProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("preco"));
         colunaEstoqueProdutoDoSistema.setCellValueFactory(new PropertyValueFactory<>("quantidadeEstoque"));
     }
 
     private void carregarTableViewCarrinho() {
-        colunaProdutoCarrinho.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getProduto().getDescricao()));
-
+        colunaProdutoCarrinho.setCellValueFactory
+                (data -> new SimpleStringProperty(data.getValue().getProduto().getDescricao()));
         colunaQTDCarrinho.setCellValueFactory(new PropertyValueFactory<>("quantidade"));
-
         colunaPrecoUnitarioCarrinho.setCellValueFactory(new PropertyValueFactory<>("precoUnitario"));
-
         colunaDescontoCarrinho.setCellValueFactory(new PropertyValueFactory<>("desconto"));
-
-        // total calculado (SEM atributo!)
-        colunaTotalCarrinho.setCellValueFactory(data -> new SimpleDoubleProperty(data.getValue().getTotalComDesconto()).asObject());
+        colunaTotalCarrinho.setCellValueFactory
+                (data -> new SimpleDoubleProperty(data.getValue().getTotalComDesconto()).asObject());
     }
 
     private void limparCamposItem() {
@@ -509,6 +502,11 @@ public class VendasController implements Initializable {
     }
 
     private void inicializarListeners() {
+        VendaService vs = new VendaService();
+        if (vs.isAnuladaVenda()) {
+            carregarProdutosNoSistema();
+            tableviewProdutoDoSistema.refresh();
+        }
         listenerPesquisaProduto();
         listenerCliente();
         listenerIVA();
@@ -516,7 +514,6 @@ public class VendasController implements Initializable {
         listenerPagamento();
         txtCliente.setDisable(true);
         txtNuit.setDisable(true);
-        listenerAtualizarTabelaProdutosNoSistema();
     }
 
     private void listenerVD() {
@@ -580,17 +577,17 @@ public class VendasController implements Initializable {
         });
     }
 
-    private void listenerAtualizarTabelaProdutosNoSistema(){
+    //Ainda nao funciona
+    private void listenerAtualizarTabelaProdutosNoSistema() {
         Stage stage = new Stage();
-        stage.focusedProperty().addListener((obs, old, atualizado)->
+        stage.focusedProperty().addListener((obs, old, atualizado) ->
                 {
-                    if (atualizado){
-                        System.out.println("Atualizados no Sistema");
+                    if (atualizado) {
                         carregarProdutosNoSistema();
                         tableviewProdutoDoSistema.refresh();
                     }
                 }
-                );
+        );
     }
 
     private void calcularTroco() {
@@ -657,7 +654,6 @@ public class VendasController implements Initializable {
         produtosFilteredList.setPredicate(p -> true);
     }
 
-    //carregar os produtos no sistema
     private void carregarProdutosNoSistema() {
 
         produtosList = produtosDAO.listar();
@@ -718,13 +714,7 @@ public class VendasController implements Initializable {
     }
 
     private void imprimirVD(@NotNull Venda venda) {
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$VD$$$$$$$$$$$$$$$$$$$$$$$$$");
         System.out.println("Imprimindo VD da venda " + venda.getIdVenda());
-        if (venda.getCliente() == null) {
-            System.out.println("Nome do Cliente: " + venda.getNomeCliente());
-        } else {
-            System.out.println("Nome do Cliente: " + venda.getCliente().getNome());
-        }
         // futuramente:
         // JasperFillManager.fillReport(...)
         // JasperViewer.viewReport(...)

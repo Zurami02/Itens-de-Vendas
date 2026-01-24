@@ -134,7 +134,6 @@ public class VendaDAO {
                 LocalDateTime dataLimpa =dataPura.withNano(0);
                 //String dataStr = rs.getString("datavenda");
                 //LocalDateTime data = LocalDateTime.parse(dataStr.replace(" ", "T"));
-                System.out.println("Data de db: "+dataLimpa);
                 venda.setDataVenda(dataLimpa);
 
                 // Cliente registado ou não

@@ -6,6 +6,7 @@ import mbtec.com.mz.itemvendatest.DAO.VendaDAO;
 import mbtec.com.mz.itemvendatest.DB.ConexaoSQLite;
 import mbtec.com.mz.itemvendatest.domain.Itemvenda;
 import mbtec.com.mz.itemvendatest.domain.Venda;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,9 +17,17 @@ public class VendaService {
     private VendaDAO vendaDAO = new VendaDAO();
     private ItemvendaDAO itemVendaDAO = new ItemvendaDAO();
     private ProdutosDAO produtoDAO = new ProdutosDAO();
+    private boolean anuladaVenda;
 
-    public void anularVenda(Venda venda) {
-        System.out.println("AnularVenda invocada");
+    public boolean isAnuladaVenda() {
+        return anuladaVenda;
+    }
+
+    public void setAnuladaVenda(boolean anuladaVenda) {
+        this.anuladaVenda = anuladaVenda;
+    }
+
+    public void anularVenda(@NotNull Venda venda) {
         Connection conn = null;
 
         try {
