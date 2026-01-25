@@ -213,7 +213,6 @@ public class HistoricoVendasController implements Initializable {
         );
 
         tableviewVendaHistorico.setItems(FXCollections.observableArrayList(vendas));
-        System.out.println(vendas);
         tableViewDetalheVenda.getItems().clear();
     }
 
